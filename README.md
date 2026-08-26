@@ -1,6 +1,6 @@
-# lagrancarniceria.com
+# La Gran Carnicería — sitio web
 
-Sitio de La Gran Carnicería (Next.js + Prisma/Postgres), con la sección de
+Sitio de La Gran Carnicería (lagrancarniceria.cl — Next.js + Prisma/Postgres), con la sección de
 precios y despacho sincronizada automáticamente desde el POS
 ([lagrancarniceria-pos](https://github.com/infolagrancarniceria-collab/lagrancarniceria-pos)).
 
