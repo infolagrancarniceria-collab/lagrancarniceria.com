@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { useUi } from "@/lib/ui";
@@ -23,10 +24,10 @@ export default function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <a href="#" className="flex items-center gap-3">
           <span
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-sm text-dark"
+            className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full"
             style={{ border: "2px solid var(--gold)", background: "var(--card)" }}
           >
-            LGC
+            <Image src="/logo.webp" alt="La Gran Carnicería" fill sizes="44px" className="object-cover" priority />
           </span>
           <span className="flex flex-col leading-tight">
             <span className="font-display text-lg text-dark">La Gran Carnicería</span>

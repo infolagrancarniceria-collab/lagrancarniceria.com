@@ -46,6 +46,7 @@ export const metadata: Metadata = {
     siteName: NEGOCIO_NOMBRE,
     locale: "es_CL",
     type: "website",
+    images: ["/logo.webp"],
   },
   twitter: {
     card: "summary",
@@ -54,13 +55,15 @@ export const metadata: Metadata = {
   },
 };
 
-// LocalBusiness — sin geo/priceRange/imagen: no tenemos coordenadas reales
-// ni fotos del local todavía, mejor omitir el campo que inventar un valor.
+// LocalBusiness — sin geo/priceRange: no tenemos coordenadas reales ni una
+// idea confiable de rango de precio, mejor omitir el campo que inventarlo.
 const jsonLdNegocio = {
   "@context": "https://schema.org",
   "@type": "Store",
   name: NEGOCIO_NOMBRE,
   url: SITIO_URL,
+  image: `${SITIO_URL}/logo.webp`,
+  logo: `${SITIO_URL}/logo.webp`,
   telephone: NEGOCIO_TELEFONO,
   address: {
     "@type": "PostalAddress",
