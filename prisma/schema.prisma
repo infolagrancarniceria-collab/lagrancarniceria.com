@@ -1,0 +1,84 @@
+// Base de datos compartida entre la página web y el POS (lagrancarniceria-pos).
+// La web es la ÚNICA pieza que toca esta base de datos directamente — el POS
+// nunca se conecta acá, le habla por HTTPS a las rutas /api/sync/* de la web
+// (ver src/app/api/sync/), autenticado con SYNC_API_KEY. Así, si algún día
+// esa llave se filtra desde el instalador del POS, el daño posible queda
+// acotado a "puede escribir catálogo/leer pedidos", nunca a la base completa.
+//
+// Cada sync del POS reemplaza el catálogo entero (no hace diffs) — ver
+// src/app/api/sync/catalogo/route.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Producto {
+  id     Int    @id @default(autoincrement())
+  // Id del producto en el POS (Producto.id de lagrancarniceria-pos) — único
+  // porque cada sync reemplaza el catálogo completo por idPos.
+  idPos  Int    @unique
+  plu    String
+  descripcion     String
+  nombreCorto     String?
+  categoriaNombre String
+
+  precio Float
+  // "kg" (productos pesables/importe) | "unidad" (productos normales) —
+  // mismo criterio que ya usa el POS (ver Producto.precio en su schema).
+  unidad String
+
+  // Familia para el selector de corte (ej. "Vacuno", "Cerdo") — null si el
+  // producto no muestra selector de corte. Las opciones válidas de cada
+  // familia viven en CorteOpcion.
+  familiaCorte String?
+  agotado      Boolean @default(false)
+
+  actualizadoEn DateTime @updatedAt
+}
+
+model Comuna {
+  id         Int    @id @default(autoincrement())
+  nombre     String @unique
+  costoEnvio Float
+
+  actualizadoEn DateTime @updatedAt
+}
+
+model CorteOpcion {
+  id      Int    @id @default(autoincrement())
+  familia String
+  nombre  String
+  orden   Int    @default(0)
+
+  @@unique([familia, nombre])
+}
+
+// Pedido armado por un cliente en la web (cotización de despacho, no un
+// pago) — el POS lo trae mediante /api/sync/pedidos-pendientes y lo marca
+// "entregadoAlPos" al confirmar que quedó guardado ahí (ver
+// /api/sync/pedidos-confirmar), para no reenviarlo de nuevo.
+model Pedido {
+  id    String   @id @default(cuid())
+  fecha DateTime @default(now())
+
+  clienteNombre    String
+  clienteTelefono  String
+  clienteDireccion String
+  comunaNombre     String
+  costoEnvio       Float
+
+  // JSON con el detalle de productos pedidos (descripcion, corte elegido,
+  // cantidad, unidad) — solo para mostrar, no hay relación con Producto
+  // porque el catálogo puede haber cambiado para cuando se revisa.
+  itemsJson String
+
+  comentario String?
+
+  entregadoAlPos   Boolean   @default(false)
+  entregadoAlPosEn DateTime?
+}

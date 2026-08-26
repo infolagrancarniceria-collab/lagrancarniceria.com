@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* Identidad de marca fija (charcoal + dorado), tomada del material gráfico
+   ya existente del negocio (flyer de despacho, export previo de Claude
+   Design) — no depende del tema del sistema del visitante. */
+:root {
+  --background: #201c19;
+  --surface: #2a2420;
+  --surface-border: #3d352d;
+  --foreground: #efede8;
+  --muted: #b8ada1;
+  --accent: #c4a574;
+  --accent-strong: #d9bb87;
+  --danger: #c0503f;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-border: var(--surface-border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-playfair);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
