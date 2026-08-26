@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { formatoCLP } from "@/lib/format";
+import ProductoFila from "@/components/ProductoFila";
 
 // Renderizado en cada visita (no estático): el tráfico del sitio es bajo,
 // así que consultar Postgres en cada request no pesa, y evita depender de
@@ -73,32 +74,19 @@ export default async function PreciosPage() {
           <section key={categoria}>
             <h2 className="font-display text-2xl font-semibold text-accent-strong">{categoria}</h2>
             <ul className="mt-4 divide-y divide-surface-border rounded-lg border border-surface-border bg-surface">
-              {items.map((p) => {
-                const opcionesCorte = p.familiaCorte ? cortesPorFamilia.get(p.familiaCorte) : undefined;
-                return (
-                  <li key={p.idPos} className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="font-medium">
-                        {p.descripcion}
-                        {p.agotado && (
-                          <span className="ml-2 rounded-full bg-danger/20 px-2 py-0.5 text-xs font-medium text-danger">
-                            Agotado
-                          </span>
-                        )}
-                      </p>
-                      {opcionesCorte && opcionesCorte.length > 0 && (
-                        <p className="mt-1 text-sm text-muted">
-                          Cortes disponibles: {opcionesCorte.map((c) => c.nombre).join(", ")}
-                        </p>
-                      )}
-                    </div>
-                    <p className="font-display text-lg font-semibold text-accent whitespace-nowrap">
-                      {formatoCLP(p.precio)}
-                      <span className="ml-1 text-sm font-normal text-muted">/{p.unidad === "kg" ? "kg" : "un."}</span>
-                    </p>
-                  </li>
-                );
-              })}
+              {items.map((p) => (
+                <ProductoFila
+                  key={p.idPos}
+                  idPos={p.idPos}
+                  descripcion={p.descripcion}
+                  precio={p.precio}
+                  unidad={p.unidad === "kg" ? "kg" : "unidad"}
+                  agotado={p.agotado}
+                  opcionesCorte={(p.familiaCorte ? cortesPorFamilia.get(p.familiaCorte) : undefined)?.map(
+                    (c) => c.nombre
+                  ) ?? []}
+                />
+              ))}
             </ul>
           </section>
         ))}

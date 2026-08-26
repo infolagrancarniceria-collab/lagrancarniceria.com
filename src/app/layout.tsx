@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { CartProvider } from "@/lib/cart";
+import CarritoLink from "@/components/CarritoLink";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,48 +36,51 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <header className="border-b border-surface-border">
-          <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-4">
-            <Link href="/" className="font-display text-xl font-bold tracking-wide text-accent-strong">
-              La Gran Carnicería
-            </Link>
-            <nav className="flex items-center gap-6 text-sm">
-              <Link href="/precios" className="hover:text-accent">
-                Precios
+        <CartProvider>
+          <header className="border-b border-surface-border">
+            <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-4">
+              <Link href="/" className="font-display text-xl font-bold tracking-wide text-accent-strong">
+                La Gran Carnicería
               </Link>
-              <Link href="/precios#despacho" className="hover:text-accent">
-                Despacho
-              </Link>
-              <a
-                href={WHATSAPP}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full bg-accent px-4 py-2 font-medium text-background hover:bg-accent-strong"
-              >
-                WhatsApp
-              </a>
-            </nav>
-          </div>
-        </header>
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-surface-border">
-          <div className="mx-auto max-w-5xl px-4 py-8 text-sm text-muted flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p>La Gran Carnicería — desde 1990 — Juan Bautista Inostroza 7809, Cerro Navia</p>
-            <div className="flex gap-4">
-              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="hover:text-accent">
-                WhatsApp
-              </a>
-              <a
-                href="https://instagram.com/lagran.carniceria"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-accent"
-              >
-                @lagran.carniceria
-              </a>
+              <nav className="flex items-center gap-6 text-sm">
+                <Link href="/precios" className="hover:text-accent">
+                  Precios
+                </Link>
+                <Link href="/precios#despacho" className="hover:text-accent">
+                  Despacho
+                </Link>
+                <CarritoLink />
+                <a
+                  href={WHATSAPP}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full bg-accent px-4 py-2 font-medium text-background hover:bg-accent-strong"
+                >
+                  WhatsApp
+                </a>
+              </nav>
             </div>
-          </div>
-        </footer>
+          </header>
+          <main className="flex-1">{children}</main>
+          <footer className="border-t border-surface-border">
+            <div className="mx-auto max-w-5xl px-4 py-8 text-sm text-muted flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p>La Gran Carnicería — desde 1990 — Juan Bautista Inostroza 7809, Cerro Navia</p>
+              <div className="flex gap-4">
+                <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="hover:text-accent">
+                  WhatsApp
+                </a>
+                <a
+                  href="https://instagram.com/lagran.carniceria"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-accent"
+                >
+                  @lagran.carniceria
+                </a>
+              </div>
+            </div>
+          </footer>
+        </CartProvider>
       </body>
     </html>
   );
