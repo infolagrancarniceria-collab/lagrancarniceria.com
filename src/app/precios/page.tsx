@@ -54,6 +54,14 @@ export default async function PreciosPage() {
 
   const productosPorCategoria = agrupar(productos, (p) => p.categoriaNombre);
   const cortesPorFamilia = agrupar(cortes, (c) => c.familia);
+  // Sin esto, el orden de las secciones quedaba dado por qué categoría
+  // tenía el producto alfabéticamente primero (efecto secundario del
+  // orderBy: descripcion de la consulta de arriba) — con el orden
+  // alfabético de la categoría misma, la posición de cada sección es
+  // predecible y no cambia solo porque alguien agregue un producto nuevo.
+  const categoriasOrdenadas = Array.from(productosPorCategoria.entries()).sort(([a], [b]) =>
+    a.localeCompare(b, "es")
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">
@@ -70,7 +78,7 @@ export default async function PreciosPage() {
       )}
 
       <div className="mt-10 flex flex-col gap-12">
-        {Array.from(productosPorCategoria.entries()).map(([categoria, items]) => (
+        {categoriasOrdenadas.map(([categoria, items]) => (
           <section key={categoria}>
             <h2 className="font-display text-2xl font-semibold text-accent-strong">{categoria}</h2>
             <ul className="mt-4 divide-y divide-surface-border rounded-lg border border-surface-border bg-surface">
