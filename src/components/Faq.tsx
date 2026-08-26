@@ -20,9 +20,20 @@ const PREGUNTAS = [
   },
 ];
 
+const jsonLdFaq = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: PREGUNTAS.map((f) => ({
+    "@type": "Question",
+    name: f.pregunta,
+    acceptedAnswer: { "@type": "Answer", text: f.respuesta },
+  })),
+};
+
 export default function Faq() {
   return (
     <section id="faq" className="mx-auto max-w-4xl scroll-mt-24 px-4 py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }} />
       <h2 className="font-display text-3xl text-dark sm:text-4xl">Preguntas frecuentes</h2>
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {PREGUNTAS.map((f) => (

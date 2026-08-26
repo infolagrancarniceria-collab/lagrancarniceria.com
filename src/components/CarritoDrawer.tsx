@@ -52,7 +52,13 @@ export default function CarritoDrawer() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => actualizarCantidad(item.idPos, item.corte, item.cantidad - paso(item.unidad))}
+                        onClick={() => {
+                          const nueva = item.cantidad - paso(item.unidad);
+                          // Bajar del mínimo (250 g / 1 un.) quita la línea en vez de
+                          // dejar una cantidad inválida — mismo mínimo que exige el
+                          // cotizador al agregar.
+                          actualizarCantidad(item.idPos, item.corte, nueva < minimo(item.unidad) ? 0 : nueva);
+                        }}
                         className="h-8 w-8 rounded-full text-sm font-bold"
                         style={{ border: "1px solid var(--card-border)" }}
                       >

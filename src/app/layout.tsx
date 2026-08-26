@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Abril_Fatface, Asar } from "next/font/google";
 import { prisma } from "@/lib/prisma";
 import { aProductoPublico, type ComunaPublica, type CorteOpcionPublica, type ProductoPublico } from "@/lib/types";
+import { NEGOCIO_DIRECCION, NEGOCIO_INSTAGRAM, NEGOCIO_NOMBRE, NEGOCIO_TELEFONO, SITIO_URL } from "@/lib/negocio";
 import Providers from "@/components/Providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -29,10 +30,52 @@ const asar = Asar({
 // /precios antes de este rediseño.
 export const dynamic = "force-dynamic";
 
+const TITULO = "La Gran Carnicería — Carnicería familiar en Cerro Navia con despacho";
+const DESCRIPCION =
+  "Carnicería familiar desde 1990 en Cerro Navia. Cortes de vacuno, cerdo, pollo y más — con despacho a domicilio en Santiago.";
+
 export const metadata: Metadata = {
-  title: "La Gran Carnicería — Carnicería familiar en Cerro Navia con despacho",
-  description:
-    "Carnicería familiar desde 1990 en Cerro Navia. Cortes de vacuno, cerdo, pollo y más — con despacho a domicilio en Santiago.",
+  metadataBase: new URL(SITIO_URL),
+  title: TITULO,
+  description: DESCRIPCION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: TITULO,
+    description: DESCRIPCION,
+    url: SITIO_URL,
+    siteName: NEGOCIO_NOMBRE,
+    locale: "es_CL",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: TITULO,
+    description: DESCRIPCION,
+  },
+};
+
+// LocalBusiness — sin geo/priceRange/imagen: no tenemos coordenadas reales
+// ni fotos del local todavía, mejor omitir el campo que inventar un valor.
+const jsonLdNegocio = {
+  "@context": "https://schema.org",
+  "@type": "Store",
+  name: NEGOCIO_NOMBRE,
+  url: SITIO_URL,
+  telephone: NEGOCIO_TELEFONO,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: NEGOCIO_DIRECCION.calle,
+    addressLocality: NEGOCIO_DIRECCION.comuna,
+    addressRegion: NEGOCIO_DIRECCION.region,
+    addressCountry: NEGOCIO_DIRECCION.pais,
+  },
+  openingHoursSpecification: {
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    opens: "09:00",
+    closes: "15:00",
+  },
+  sameAs: [NEGOCIO_INSTAGRAM],
 };
 
 // Se consulta acá (server component raíz) en vez de en cada sección, para
@@ -63,6 +106,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${abrilFatface.variable} ${asar.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background font-sans text-text">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdNegocio) }} />
         <Providers productos={productos} comunas={comunas} cortes={cortes}>
           <Header />
           <main className="flex-1">{children}</main>
