@@ -25,10 +25,17 @@ const productoSchema = z.object({
   descripcion: z.string(),
   nombreCorto: z.string().nullable(),
   categoriaNombre: z.string(),
+  marca: z.string().nullable(),
+  descripcionCorta: z.string().nullable(),
   precio: z.number(),
   unidad: z.enum(["kg", "unidad"]),
   familiaCorte: z.string().nullable(),
-  agotado: z.boolean(),
+  disponibilidad: z.enum(["disponible", "agotado", "proximamente"]),
+  featured: z.boolean(),
+  lowStock: z.boolean(),
+  promoPrecioUnitario: z.number().nullable(),
+  promoGramosMinimos: z.number().int().nullable(),
+  promoEtiqueta: z.string().nullable(),
 });
 
 const bodySchema = z.object({

@@ -2,13 +2,22 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+export type Envasado = "Tradicional" | "Al vacío";
+
 export interface ItemCarrito {
   idPos: number;
+  plu: string;
   descripcion: string;
   corte: string | null;
+  envasado: Envasado | null;
+  instrucciones: string | null;
+  // Precio efectivo por unidad ya resuelto (considera promo por volumen si
+  // aplicaba al momento de agregar) — el carrito no vuelve a mirar el
+  // catálogo, así una cotización no cambia de precio si el catálogo se
+  // actualiza mientras el cliente sigue armando su pedido.
   precio: number;
   unidad: "kg" | "unidad";
-  cantidad: number;
+  cantidad: number; // gramos si unidad "kg", unidades si unidad "unidad"
 }
 
 function claveItem(idPos: number, corte: string | null): string {
@@ -69,7 +78,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const existente = actual.find((i) => claveItem(i.idPos, i.corte) === clave);
           if (existente) {
             return actual.map((i) =>
-              claveItem(i.idPos, i.corte) === clave ? { ...i, cantidad: i.cantidad + cantidad } : i
+              claveItem(i.idPos, i.corte) === clave
+                ? { ...i, cantidad: i.cantidad + cantidad, envasado: item.envasado, instrucciones: item.instrucciones }
+                : i
             );
           }
           return [...actual, { ...item, cantidad }];
@@ -86,7 +97,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems((actual) => actual.filter((i) => claveItem(i.idPos, i.corte) !== claveItem(idPos, corte)));
       },
       vaciar: () => setItems([]),
-      totalItems: items.reduce((acc, i) => acc + i.cantidad, 0),
+      totalItems: items.length,
     }),
     [items]
   );

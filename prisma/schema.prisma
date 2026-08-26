@@ -26,6 +26,8 @@ model Producto {
   descripcion     String
   nombreCorto     String?
   categoriaNombre String
+  marca           String?
+  descripcionCorta String?
 
   precio Float
   // "kg" (productos pesables/importe) | "unidad" (productos normales) —
@@ -36,7 +38,20 @@ model Producto {
   // producto no muestra selector de corte. Las opciones válidas de cada
   // familia viven en CorteOpcion.
   familiaCorte String?
-  agotado      Boolean @default(false)
+
+  // "disponible" | "agotado" | "proximamente" — string en vez de un enum de
+  // Postgres para no tener que migrar el enum cada vez que el POS agregue
+  // un estado nuevo (mismo criterio que usa el POS para sus campos libres).
+  disponibilidad String  @default("disponible")
+  featured        Boolean @default(false)
+  lowStock        Boolean @default(false)
+
+  // Promoción por volumen (ej. "$3.980/kg al llevar 3 kilos o más") — los
+  // tres campos van juntos: si promoPrecioUnitario tiene valor, la tarjeta
+  // de producto muestra el badge "Oferta" y la etiqueta.
+  promoPrecioUnitario Float?
+  promoGramosMinimos  Int?
+  promoEtiqueta       String?
 
   actualizadoEn DateTime @updatedAt
 }
@@ -58,23 +73,35 @@ model CorteOpcion {
   @@unique([familia, nombre])
 }
 
-// Pedido armado por un cliente en la web (cotización de despacho, no un
-// pago) — el POS lo trae mediante /api/sync/pedidos-pendientes y lo marca
-// "entregadoAlPos" al confirmar que quedó guardado ahí (ver
-// /api/sync/pedidos-confirmar), para no reenviarlo de nuevo.
+// Pedido armado por un cliente en la web (cotización, no un pago) — el POS
+// lo trae mediante /api/sync/pedidos-pendientes y lo marca "entregadoAlPos"
+// al confirmar que quedó guardado ahí (ver /api/sync/pedidos-confirmar),
+// para no reenviarlo de nuevo.
 model Pedido {
   id    String   @id @default(cuid())
   fecha DateTime @default(now())
 
-  clienteNombre    String
-  clienteTelefono  String
-  clienteDireccion String
-  comunaNombre     String
-  costoEnvio       Float
+  clienteNombre   String
+  clienteTelefono String
+
+  // "retiro" | "despacho" — clienteDireccion/comunaNombre/costoEnvio solo
+  // aplican (y son obligatorios en la validación de /api/pedidos) cuando es
+  // despacho; en un retiro en tienda quedan null. El default solo importa
+  // para la migración (filas existentes, si las hubiera) — todo pedido
+  // nuevo siempre lo manda explícito.
+  tipoEntrega      String  @default("despacho")
+  clienteDireccion String?
+  comunaNombre     String?
+  costoEnvio       Float?
+
+  fechaEntrega String?
+  // Solo informativo — el pago real se coordina aparte, no hay pasarela.
+  medioPago    String?
 
   // JSON con el detalle de productos pedidos (descripcion, corte elegido,
-  // cantidad, unidad) — solo para mostrar, no hay relación con Producto
-  // porque el catálogo puede haber cambiado para cuando se revisa.
+  // envasado, cantidad, unidad, instrucciones) — solo para mostrar, no hay
+  // relación con Producto porque el catálogo puede haber cambiado para
+  // cuando se revisa.
   itemsJson String
 
   comentario String?
