@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/* Identidad de marca — paleta y tipografías fijas del negocio (no dependen
+   del tema del sistema del visitante). */
+:root {
+  --background: #efede8; /* crema/kraft, fondo principal */
+  --accent: #7a2e24; /* burdeo/terracota — botones, precios, links */
+  --dark: #201c19; /* carbón cálido casi negro — hero, footer, textos fuertes */
+  --gold: #c4a574; /* dorado/tostado — detalle fino */
+  --offer: #b62424; /* rojo — exclusivo para "Oferta" y el popup promocional */
+  --muted: #6e6a62; /* texto secundario */
+  --text: #3a3532; /* texto de párrafo */
+  --surface: #fbf9f5; /* superficie interior sutil (dentro de tarjetas) */
+  --card: #ffffff; /* tarjetas de producto */
+  --card-border: rgba(166, 139, 104, 0.25);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-accent: var(--accent);
+  --color-dark: var(--dark);
+  --color-gold: var(--gold);
+  --color-offer: var(--offer);
+  --color-muted: var(--muted);
+  --color-text: var(--text);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --font-display: var(--font-abril-fatface);
+  --font-sans: var(--font-asar);
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+}
+
+/* Todas las cifras (precios, pesos, cantidades) usan números tabulares —
+   evita que salten de ancho al cambiar en vivo (ej. la calculadora). */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.separador-categoria {
+  background: linear-gradient(90deg, var(--gold), transparent);
+  height: 1px;
+}
