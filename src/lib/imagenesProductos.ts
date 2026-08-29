@@ -104,6 +104,21 @@ function normalizar(texto: string): string {
     .toLowerCase();
 }
 
+// La categoría real en el POS puede no coincidir textualmente con el
+// nombre que se usó al armar las reglas de arriba (ej. el Pollo está
+// cargado como categoría "AVES", no "Pollo") — cada categoría de regla
+// acepta una lista de nombres reales equivalentes, comparados sin
+// importar mayúsculas/acentos. Si una categoría no aparece acá, se
+// compara tal cual contra su propio nombre.
+const CATEGORIAS_EQUIVALENTES: Record<string, string[]> = {
+  Pollo: ["pollo", "aves"],
+};
+
+function categoriaCoincide(categoriaRegla: string, categoriaProducto: string): boolean {
+  const equivalentes = CATEGORIAS_EQUIVALENTES[categoriaRegla] ?? [normalizar(categoriaRegla)];
+  return equivalentes.includes(normalizar(categoriaProducto));
+}
+
 // Devuelve la ruta pública de la foto del producto, o null si no hay una
 // emparejada — quien la use debe manejar el caso sin foto (ver
 // ProductoCard), no todos los productos tienen una todavía.
@@ -111,7 +126,8 @@ export function imagenProducto(producto: { descripcion: string; categoriaNombre:
   const descripcionNormalizada = normalizar(producto.descripcion);
   const regla = REGLAS.find(
     ({ categoriaNombre, palabras }) =>
-      categoriaNombre === producto.categoriaNombre && palabras.every((palabra) => descripcionNormalizada.includes(palabra))
+      categoriaCoincide(categoriaNombre, producto.categoriaNombre) &&
+      palabras.every((palabra) => descripcionNormalizada.includes(palabra))
   );
   return regla ? `/productos/prod-${regla.slug}.webp` : null;
 }
