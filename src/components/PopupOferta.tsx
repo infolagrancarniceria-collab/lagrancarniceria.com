@@ -49,7 +49,8 @@ export default function PopupOferta() {
         </span>
         <h3 className="mt-3 font-display text-2xl text-dark">{oferta.descripcion}</h3>
         <p className="mt-2 text-sm text-muted">
-          {formatoCLP(oferta.precio)}/kg regular · {oferta.promoEtiqueta}
+          {formatoCLP(oferta.precio)}
+          {oferta.unidad === "kg" ? "/kg" : "/unidad"} regular · {oferta.promoEtiqueta}
         </p>
         <button
           type="button"

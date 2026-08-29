@@ -48,8 +48,13 @@ function CotizadorFormulario({
   const [envasado, setEnvasado] = useState<Envasado | null>(esPeso ? "Tradicional" : null);
   const [instrucciones, setInstrucciones] = useState("");
 
+  // promoGramosMinimos es la cantidad mínima para que aplique la promo —
+  // en gramos si el producto es por peso, en unidades si es por unidad
+  // (mismo campo, la unidad la define p.unidad; ver comentario equivalente
+  // en ProductoForm.tsx del POS, donde se configura).
+  const cantidadMinimaPromo = esPeso ? pesoGramos : cantidadUnidades;
   const promoAplica =
-    esPeso && p.promoPrecioUnitario != null && p.promoGramosMinimos != null && pesoGramos >= p.promoGramosMinimos;
+    p.promoPrecioUnitario != null && p.promoGramosMinimos != null && cantidadMinimaPromo >= p.promoGramosMinimos;
   const precioEfectivo = promoAplica ? p.promoPrecioUnitario! : p.precio;
 
   const subtotal = esPeso ? Math.round((precioEfectivo * pesoGramos) / 1000) : precioEfectivo * cantidadUnidades;
