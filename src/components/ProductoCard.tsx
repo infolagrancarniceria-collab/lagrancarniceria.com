@@ -18,14 +18,14 @@ export default function ProductoCard({ producto }: { producto: ProductoPublico }
       className="flex flex-col overflow-hidden rounded-xl bg-card transition-transform duration-300 hover:-translate-y-0.5"
       style={{ border: "1px solid var(--card-border)", boxShadow: "0 2px 10px rgba(0,0,0,.06)" }}
     >
-      <div className="relative h-[150px] w-full" style={{ background: "var(--surface)" }}>
+      <div className="relative aspect-[4/5] w-full" style={{ background: "var(--surface)" }}>
         {foto && (
           <Image
             src={foto}
             alt={producto.descripcion}
             fill
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-            className="object-cover"
+            className="object-contain"
           />
         )}
         {badge && (
