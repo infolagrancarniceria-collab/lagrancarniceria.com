@@ -88,6 +88,7 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Pollo", palabras: ["ala", "entera"], slug: "pol-ala-entera" },
   { categoriaNombre: "Pollo", palabras: ["pollo", "entero"], slug: "pol-entero" },
   { categoriaNombre: "Pollo", palabras: ["panita"], slug: "pol-panita" },
+  { categoriaNombre: "Pollo", palabras: ["pana"], slug: "pol-panita" }, // "pana" = forma corta/coloquial de "panita" (higado de pollo)
   { categoriaNombre: "Pollo", palabras: ["patas"], slug: "pol-patas" },
   { categoriaNombre: "Pollo", palabras: ["cazuela"], slug: "pol-cazuela" },
   { categoriaNombre: "Pollo", palabras: ["contre"], slug: "pol-contre" },
