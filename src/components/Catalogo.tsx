@@ -6,6 +6,7 @@ import type { ProductoPublico } from "@/lib/types";
 import ProductoCard from "./ProductoCard";
 
 const ORDEN_CATEGORIAS = [
+  "Combos",
   "Pollo",
   "Cerdo",
   "Vacuno",
