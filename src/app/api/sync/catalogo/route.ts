@@ -30,6 +30,7 @@ const productoSchema = z.object({
   precio: z.number(),
   unidad: z.enum(["kg", "unidad"]),
   familiaCorte: z.string().nullable(),
+  pesoPromedioTrozoGramos: z.number().int().nullable(),
   disponibilidad: z.enum(["disponible", "agotado", "proximamente"]),
   featured: z.boolean(),
   lowStock: z.boolean(),

@@ -15,6 +15,9 @@ export interface ProductoPublico {
   precio: number;
   unidad: UnidadVenta;
   familiaCorte: string | null;
+  // Peso promedio de un trozo/presa (g) — si tiene valor, el cotizador deja
+  // elegir por cantidad de trozos además de por peso/monto.
+  pesoPromedioTrozoGramos: number | null;
   disponibilidad: Disponibilidad;
   featured: boolean;
   lowStock: boolean;
@@ -49,6 +52,7 @@ export function aProductoPublico(p: {
   precio: number;
   unidad: string;
   familiaCorte: string | null;
+  pesoPromedioTrozoGramos: number | null;
   disponibilidad: string;
   featured: boolean;
   lowStock: boolean;
@@ -67,6 +71,7 @@ export function aProductoPublico(p: {
     precio: p.precio,
     unidad: p.unidad as UnidadVenta,
     familiaCorte: p.familiaCorte,
+    pesoPromedioTrozoGramos: p.pesoPromedioTrozoGramos,
     disponibilidad: p.disponibilidad as Disponibilidad,
     featured: p.featured,
     lowStock: p.lowStock,

@@ -65,6 +65,19 @@ function CotizadorFormulario({
   const pesoGramosTexto = Math.round((parseFloat(pesoKgTexto.replace(",", ".")) || 0) * 1000);
   const pesoGramos = pesoGramosTexto > 0 ? pesoGramosTexto : PESO_MINIMO;
 
+  // Cantidad de trozos aproximada — se deriva del peso actual (no se guarda
+  // aparte), así siempre queda consistente sea cual sea el campo que se
+  // haya editado (peso, monto o los mismos trozos). Solo aplica a productos
+  // donde el POS configuró un peso promedio por trozo (típicamente
+  // pollo/aves); ver Producto.pesoPromedioTrozoGramos.
+  const trozosAprox = p.pesoPromedioTrozoGramos ? Math.max(1, Math.round(pesoGramos / p.pesoPromedioTrozoGramos)) : null;
+
+  function elegirTrozos(cantidad: number) {
+    if (!p.pesoPromedioTrozoGramos) return;
+    const gramos = redondearPaso(Math.max(1, cantidad) * p.pesoPromedioTrozoGramos);
+    setPesoKgTexto(formatoKgInput(gramos));
+  }
+
   const promoAplica =
     esPeso && p.promoPrecioUnitario != null && p.promoGramosMinimos != null && pesoGramos >= p.promoGramosMinimos;
   const precioEfectivo = promoAplica ? p.promoPrecioUnitario! : p.precio;
@@ -86,6 +99,13 @@ function CotizadorFormulario({
   }
 
   function confirmarAgregar() {
+    // Cuando el producto tiene peso promedio por trozo, se le avisa al
+    // equipo cuántos trozos aprox. corresponden al peso pedido — así saben
+    // cortar esa cantidad de piezas, no solo pesar un pedazo cualquiera
+    // hasta llegar al peso.
+    const notaTrozos = trozosAprox != null ? `≈${trozosAprox} trozo${trozosAprox === 1 ? "" : "s"} aprox.` : null;
+    const instruccionesFinal = [notaTrozos, instrucciones.trim() || null].filter(Boolean).join(" — ") || null;
+
     agregar(
       {
         idPos: p.idPos,
@@ -93,7 +113,7 @@ function CotizadorFormulario({
         descripcion: p.descripcion,
         corte,
         envasado,
-        instrucciones: instrucciones.trim() || null,
+        instrucciones: instruccionesFinal,
         precio: precioEfectivo,
         unidad: p.unidad,
       },
@@ -162,6 +182,34 @@ function CotizadorFormulario({
                 </button>
               ))}
             </div>
+
+            {trozosAprox != null && (
+              <div className="mt-4 border-t pt-4" style={{ borderColor: "rgba(196,165,116,.25)" }}>
+                <p className="text-xs text-gold">¿Prefieres pedir por cantidad de trozos?</p>
+                <div className="mt-2 flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => elegirTrozos(trozosAprox - 1)}
+                    className="h-9 w-9 rounded-full text-lg font-bold text-background"
+                    style={{ border: "1px solid rgba(196,165,116,.4)" }}
+                  >
+                    −
+                  </button>
+                  <span className="tabular font-sans text-lg font-bold text-background">
+                    {trozosAprox} trozo{trozosAprox === 1 ? "" : "s"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => elegirTrozos(trozosAprox + 1)}
+                    className="h-9 w-9 rounded-full text-lg font-bold text-background"
+                    style={{ border: "1px solid rgba(196,165,116,.4)" }}
+                  >
+                    +
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gold opacity-80">Peso estimado — se ajusta al pesar de verdad.</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="mt-5 flex items-center justify-center gap-6 rounded-xl p-6" style={{ background: "var(--dark)" }}>
