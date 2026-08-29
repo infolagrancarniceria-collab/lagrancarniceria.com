@@ -15,6 +15,14 @@ function redondearPaso(gramos: number): number {
   return Math.max(PESO_MINIMO, Math.round(gramos / PESO_PASO) * PESO_PASO);
 }
 
+// El campo de peso se edita en kilos (con decimales, ej. "1.3") porque así
+// piensa la gente al comprar carne — puertas adentro (pesoGramos) se sigue
+// guardando en gramos, que es lo que necesita el resto del cotizador.
+function formatoKgInput(gramos: number): string {
+  const kg = gramos / 1000;
+  return Number.isInteger(kg) ? String(kg) : kg.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 export default function CotizadorModal() {
   const { productoCotizando, cerrarCotizador } = useUi();
   const { cortes } = useCatalogoData();
@@ -42,11 +50,20 @@ function CotizadorFormulario({
   const opciones = useMemo(() => opcionesCorte(cortes, p.familiaCorte), [cortes, p.familiaCorte]);
   const esPeso = p.unidad === "kg";
 
-  const [pesoGramos, setPesoGramos] = useState(PESO_MINIMO);
+  // El peso se edita en kilos, como texto libre (no un <input type="number">
+  // en gramos): así se puede escribir "1.3" directo, que es como la gente
+  // piensa una compra de carne, en vez de tener que convertir a 1300 a mano.
+  // pesoGramos se deriva de este texto en cada render; solo se re-formatea
+  // (redondeo a los 50 g más cercanos) al perder el foco o al venir de un
+  // chip/el monto, nunca mientras se está escribiendo.
+  const [pesoKgTexto, setPesoKgTexto] = useState(formatoKgInput(PESO_MINIMO));
   const [cantidadUnidades, setCantidadUnidades] = useState(1);
   const [corte, setCorte] = useState<string | null>(opciones[0] ?? null);
   const [envasado, setEnvasado] = useState<Envasado | null>(esPeso ? "Tradicional" : null);
   const [instrucciones, setInstrucciones] = useState("");
+
+  const pesoGramosTexto = Math.round((parseFloat(pesoKgTexto.replace(",", ".")) || 0) * 1000);
+  const pesoGramos = pesoGramosTexto > 0 ? pesoGramosTexto : PESO_MINIMO;
 
   const promoAplica =
     esPeso && p.promoPrecioUnitario != null && p.promoGramosMinimos != null && pesoGramos >= p.promoGramosMinimos;
@@ -55,9 +72,17 @@ function CotizadorFormulario({
   const subtotal = esPeso ? Math.round((precioEfectivo * pesoGramos) / 1000) : precioEfectivo * cantidadUnidades;
   const monto = Math.round((precioEfectivo * pesoGramos) / 1000);
 
+  function elegirChip(gramos: number) {
+    setPesoKgTexto(formatoKgInput(gramos));
+  }
+
   function cambiarMonto(valor: number) {
     const gramos = redondearPaso((valor / precioEfectivo) * 1000);
-    setPesoGramos(gramos);
+    setPesoKgTexto(formatoKgInput(gramos));
+  }
+
+  function corregirPesoAlSalir() {
+    setPesoKgTexto(formatoKgInput(redondearPaso(pesoGramos)));
   }
 
   function confirmarAgregar() {
@@ -101,13 +126,13 @@ function CotizadorFormulario({
           <div className="mt-5 rounded-xl p-4" style={{ background: "var(--dark)" }}>
             <div className="grid grid-cols-2 gap-4">
               <label className="flex flex-col gap-1 text-xs text-gold">
-                Peso (g)
+                Peso (kg)
                 <input
-                  type="number"
-                  min={PESO_MINIMO}
-                  step={PESO_PASO}
-                  value={pesoGramos}
-                  onChange={(e) => setPesoGramos(redondearPaso(Number(e.target.value) || PESO_MINIMO))}
+                  type="text"
+                  inputMode="decimal"
+                  value={pesoKgTexto}
+                  onChange={(e) => setPesoKgTexto(e.target.value)}
+                  onBlur={corregirPesoAlSalir}
                   className="tabular rounded-lg bg-transparent px-3 py-2 text-xl font-bold text-background"
                   style={{ border: "1px solid rgba(196,165,116,.4)" }}
                 />
@@ -129,7 +154,7 @@ function CotizadorFormulario({
                 <button
                   key={g}
                   type="button"
-                  onClick={() => setPesoGramos(g)}
+                  onClick={() => elegirChip(g)}
                   className="rounded-full px-3 py-1 text-xs font-medium text-gold transition-colors duration-300"
                   style={{ border: "1px solid rgba(196,165,116,.4)" }}
                 >
