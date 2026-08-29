@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { badgeProducto } from "@/lib/badges";
 import { formatoCLP } from "@/lib/format";
+import { imagenProducto } from "@/lib/imagenesProductos";
 import { useUi } from "@/lib/ui";
 import type { ProductoPublico } from "@/lib/types";
 
@@ -9,13 +11,23 @@ export default function ProductoCard({ producto }: { producto: ProductoPublico }
   const { abrirCotizador } = useUi();
   const badge = badgeProducto(producto);
   const deshabilitado = producto.disponibilidad !== "disponible";
+  const foto = imagenProducto(producto);
 
   return (
     <article
       className="flex flex-col overflow-hidden rounded-xl bg-card transition-transform duration-300 hover:-translate-y-0.5"
       style={{ border: "1px solid var(--card-border)", boxShadow: "0 2px 10px rgba(0,0,0,.06)" }}
     >
-      <div className="relative h-[150px] w-full" style={{ background: "var(--surface)" }}>
+      <div className="relative aspect-[4/5] w-full" style={{ background: "var(--surface)" }}>
+        {foto && (
+          <Image
+            src={foto}
+            alt={producto.descripcion}
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            className="object-contain"
+          />
+        )}
         {badge && (
           <span
             className="absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-semibold"
