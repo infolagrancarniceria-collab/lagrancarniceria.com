@@ -5,12 +5,18 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const itemSchema = z.object({
+  plu: z.string().trim().min(1),
   descripcion: z.string().trim().min(1),
   corte: z.string().trim().min(1).nullable(),
   envasado: z.enum(["Tradicional", "Al vacío"]).nullable(),
   instrucciones: z.string().trim().max(300).nullable(),
   cantidad: z.number().positive(),
   unidad: z.enum(["kg", "unidad"]),
+  // CLP/kg si unidad es "kg" (cantidad va en gramos) o CLP/unidad si
+  // unidad es "unidad" — mismo criterio que ItemCarrito.precio, para que el
+  // POS pueda calcular el subtotal de cada item sin tener que ir a buscar
+  // el precio actual del catálogo (que puede haber cambiado).
+  precioUnitario: z.number().nonnegative(),
 });
 
 const bodySchemaBase = z.object({
