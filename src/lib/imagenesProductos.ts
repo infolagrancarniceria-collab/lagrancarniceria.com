@@ -41,6 +41,7 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Cerdo", palabras: ["malaya", "900"], slug: "cer-malaya-900" },
   { categoriaNombre: "Cerdo", palabras: ["filete"], slug: "cer-filete" },
   { categoriaNombre: "Cerdo", palabras: ["costillitas", "baby"], slug: "cer-costillitas-baby" },
+  { categoriaNombre: "Cerdo", palabras: ["pulpa", "45"], slug: "cer-pulpa-45" },
 
   // --- Vacuno ---
   { categoriaNombre: "Vacuno", palabras: ["patas"], slug: "vac-patas" },
