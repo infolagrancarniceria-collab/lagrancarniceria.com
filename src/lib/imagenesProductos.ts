@@ -46,6 +46,7 @@ const REGLAS: ReglaImagen[] = [
   // --- Vacuno ---
   { categoriaNombre: "Vacuno", palabras: ["patas"], slug: "vac-patas" },
   { categoriaNombre: "Vacuno", palabras: ["molida", "especial"], slug: "vac-molida-especial" },
+  { categoriaNombre: "Vacuno", palabras: ["molida", "corriente"], slug: "vac-molida-corriente" },
   { categoriaNombre: "Vacuno", palabras: ["sobrecostilla"], slug: "vac-sobrecostilla" },
   { categoriaNombre: "Vacuno", palabras: ["huachalomo"], slug: "vac-huachalomo" },
   { categoriaNombre: "Vacuno", palabras: ["pollo", "ganso"], slug: "vac-pollo-ganso" },
