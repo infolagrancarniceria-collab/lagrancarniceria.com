@@ -39,6 +39,11 @@ model Producto {
   // familia viven en CorteOpcion.
   familiaCorte String?
 
+  // Peso promedio de un trozo/presa, en gramos (típicamente pollo/aves) —
+  // ver el mismo campo en el POS (Producto.pesoPromedioTrozoGramos) para el
+  // porqué. Null = el producto no ofrece elegir por cantidad de trozos.
+  pesoPromedioTrozoGramos Int?
+
   // "disponible" | "agotado" | "proximamente" — string en vez de un enum de
   // Postgres para no tener que migrar el enum cada vez que el POS agregue
   // un estado nuevo (mismo criterio que usa el POS para sus campos libres).
