@@ -80,16 +80,20 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Congelados", palabras: ["ala", "centro"], slug: "con-ala-centro" },
   { categoriaNombre: "Congelados", palabras: ["arandanos"], slug: "con-arandanos" },
   { categoriaNombre: "Congelados", palabras: ["aros", "cebolla"], slug: "con-aros-cebolla" },
-  { categoriaNombre: "Congelados", palabras: ["arvejas"], slug: "con-arvejas" },
   { categoriaNombre: "Congelados", palabras: ["pasta", "choclo"], slug: "con-pasta-choclo" },
   { categoriaNombre: "Congelados", palabras: ["choclo", "tierno"], slug: "con-choclo-tierno" },
-  { categoriaNombre: "Congelados", palabras: ["choclo"], slug: "con-choclo" }, // genérico, después de "pasta choclo" y "choclo tierno"
-  { categoriaNombre: "Congelados", palabras: ["crianza"], slug: "con-hamburguesa-crianza" },
+  // Sin regla genérica de "choclo" a propósito: hay varios productos reales
+  // con nombres de choclo distintos (grano, trozo, pastelera, etc.) que no
+  // son el mismo corte/formato que la foto que se tiene — mejor sin foto
+  // que mostrar la que no corresponde (ver commit de corrección).
+  { categoriaNombre: "Congelados", palabras: ["hamburguesa", "crianza"], slug: "con-hamburguesa-crianza" },
   { categoriaNombre: "Congelados", palabras: ["salmon", "natural"], slug: "con-salmon-natural" },
   { categoriaNombre: "Congelados", palabras: ["salmon", "empanizado"], slug: "con-salmon-empanizado" },
   { categoriaNombre: "Congelados", palabras: ["mix", "berries"], slug: "con-mix-berries" },
   { categoriaNombre: "Congelados", palabras: ["nuggets"], slug: "con-nuggets-pollo" },
-  { categoriaNombre: "Congelados", palabras: ["papas", "fritas"], slug: "con-papas-fritas" },
+  // "maipo" a propósito: hay papas fritas de otras marcas (Minuto Verde,
+  // Fundo Sorno) con envase distinto al que se fotografió.
+  { categoriaNombre: "Congelados", palabras: ["papas", "fritas", "maipo"], slug: "con-papas-fritas" },
   { categoriaNombre: "Congelados", palabras: ["pulpa", "maracuya"], slug: "con-pulpa-maracuya" },
 
   // --- Artesanales ---
