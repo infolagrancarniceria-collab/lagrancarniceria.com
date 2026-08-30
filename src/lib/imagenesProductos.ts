@@ -50,11 +50,13 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Vacuno", palabras: ["sobrecostilla"], slug: "vac-sobrecostilla" },
   { categoriaNombre: "Vacuno", palabras: ["huachalomo"], slug: "vac-huachalomo" },
   { categoriaNombre: "Vacuno", palabras: ["pollo", "ganso"], slug: "vac-pollo-ganso" },
+  { categoriaNombre: "Vacuno", palabras: ["punta", "ganso"], slug: "vac-punta-ganso" },
   { categoriaNombre: "Vacuno", palabras: ["asado", "carnicero"], slug: "vac-asado-carnicero" },
+  { categoriaNombre: "Vacuno", palabras: ["asado", "americano"], slug: "vac-asado-americano" },
   { categoriaNombre: "Vacuno", palabras: ["tapapecho"], slug: "vac-tapapecho" },
   { categoriaNombre: "Vacuno", palabras: ["abastero"], slug: "vac-abastero" },
   { categoriaNombre: "Vacuno", palabras: ["choclillo"], slug: "vac-choclillo" },
-  { categoriaNombre: "Vacuno", palabras: ["ganso"], slug: "vac-ganso" }, // genérico, después de "pollo ganso"
+  { categoriaNombre: "Vacuno", palabras: ["ganso"], slug: "vac-ganso" }, // genérico, después de "pollo ganso" y "punta ganso"
   { categoriaNombre: "Vacuno", palabras: ["palanca"], slug: "vac-palanca" },
   { categoriaNombre: "Vacuno", palabras: ["osobuco"], slug: "vac-osobuco" },
   { categoriaNombre: "Vacuno", palabras: ["churrasco"], slug: "vac-churrasco" },
@@ -68,6 +70,11 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Vacuno", palabras: ["lomo", "liso"], slug: "vac-lomo-liso" },
   { categoriaNombre: "Vacuno", palabras: ["lomo", "vetado"], slug: "vac-lomo-vetado" },
   { categoriaNombre: "Vacuno", palabras: ["filete"], slug: "vac-filete" },
+  { categoriaNombre: "Vacuno", palabras: ["corazon"], slug: "vac-corazon" },
+  { categoriaNombre: "Vacuno", palabras: ["costilla", "derecha"], slug: "vac-costilla-derecha" },
+  { categoriaNombre: "Vacuno", palabras: ["entrana"], slug: "vac-entrana" },
+  { categoriaNombre: "Vacuno", palabras: ["guata"], slug: "vac-guata" },
+  { categoriaNombre: "Vacuno", palabras: ["pana"], slug: "vac-pana" },
 
   // --- Artesanales ---
   { categoriaNombre: "Artesanales", palabras: ["lomo", "ahumado"], slug: "art-lomo-ahumado" },
