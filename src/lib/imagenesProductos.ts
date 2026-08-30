@@ -52,7 +52,7 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Vacuno", palabras: ["pollo", "ganso"], slug: "vac-pollo-ganso" },
   { categoriaNombre: "Vacuno", palabras: ["punta", "ganso"], slug: "vac-punta-ganso" },
   { categoriaNombre: "Vacuno", palabras: ["asado", "carnicero"], slug: "vac-asado-carnicero" },
-  { categoriaNombre: "Vacuno", palabras: ["asado", "americano"], slug: "vac-asado-americano" },
+  { categoriaNombre: "Vacuno", palabras: ["americano"], slug: "vac-asado-americano" },
   { categoriaNombre: "Vacuno", palabras: ["tapapecho"], slug: "vac-tapapecho" },
   { categoriaNombre: "Vacuno", palabras: ["abastero"], slug: "vac-abastero" },
   { categoriaNombre: "Vacuno", palabras: ["choclillo"], slug: "vac-choclillo" },
