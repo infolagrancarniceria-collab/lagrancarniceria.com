@@ -76,6 +76,22 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Vacuno", palabras: ["guata"], slug: "vac-guata" },
   { categoriaNombre: "Vacuno", palabras: ["pana"], slug: "vac-pana" },
 
+  // --- Congelados ---
+  { categoriaNombre: "Congelados", palabras: ["ala", "centro"], slug: "con-ala-centro" },
+  { categoriaNombre: "Congelados", palabras: ["arandanos"], slug: "con-arandanos" },
+  { categoriaNombre: "Congelados", palabras: ["aros", "cebolla"], slug: "con-aros-cebolla" },
+  { categoriaNombre: "Congelados", palabras: ["arvejas"], slug: "con-arvejas" },
+  { categoriaNombre: "Congelados", palabras: ["pasta", "choclo"], slug: "con-pasta-choclo" },
+  { categoriaNombre: "Congelados", palabras: ["choclo", "tierno"], slug: "con-choclo-tierno" },
+  { categoriaNombre: "Congelados", palabras: ["choclo"], slug: "con-choclo" }, // genérico, después de "pasta choclo" y "choclo tierno"
+  { categoriaNombre: "Congelados", palabras: ["crianza"], slug: "con-hamburguesa-crianza" },
+  { categoriaNombre: "Congelados", palabras: ["salmon", "natural"], slug: "con-salmon-natural" },
+  { categoriaNombre: "Congelados", palabras: ["salmon", "empanizado"], slug: "con-salmon-empanizado" },
+  { categoriaNombre: "Congelados", palabras: ["mix", "berries"], slug: "con-mix-berries" },
+  { categoriaNombre: "Congelados", palabras: ["nuggets"], slug: "con-nuggets-pollo" },
+  { categoriaNombre: "Congelados", palabras: ["papas", "fritas"], slug: "con-papas-fritas" },
+  { categoriaNombre: "Congelados", palabras: ["pulpa", "maracuya"], slug: "con-pulpa-maracuya" },
+
   // --- Artesanales ---
   { categoriaNombre: "Artesanales", palabras: ["lomo", "ahumado"], slug: "art-lomo-ahumado" },
   { categoriaNombre: "Artesanales", palabras: ["choripan", "tradicional"], slug: "art-choripan-tradicional" },
