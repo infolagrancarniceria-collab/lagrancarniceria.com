@@ -77,7 +77,9 @@ export default function Catalogo() {
   return (
     <section id="catalogo" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16">
       <h2 className="font-display text-3xl text-dark sm:text-4xl">Catálogo</h2>
-      <p className="mt-2 text-sm text-muted">Precios y stock referenciales, sujetos a confirmación por WhatsApp.</p>
+      <p className="mt-2 text-sm text-muted">
+        Precios, stock y fotos referenciales, sujetos a confirmación por WhatsApp.
+      </p>
 
       <div className="mt-6 flex flex-col gap-4">
         <input

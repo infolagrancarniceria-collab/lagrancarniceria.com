@@ -19,7 +19,7 @@ export default function Despacho() {
       </div>
 
       <p className="mt-4 text-sm text-muted">
-        Todo pedido queda sujeto a confirmación manual por WhatsApp. Precios y stock referenciales, sujetos a
+        Todo pedido queda sujeto a confirmación manual por WhatsApp. Precios, stock y fotos referenciales, sujetos a
         confirmación por WhatsApp.
       </p>
 
