@@ -111,6 +111,14 @@ export default function Catalogo() {
 
       {chip === null ? (
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setChip("Todos")}
+            className="rounded-2xl px-6 py-8 text-center font-display text-2xl transition-colors duration-300 sm:col-span-2"
+            style={{ background: "var(--accent)", color: "var(--background)" }}
+          >
+            Ver todo el catálogo
+          </button>
           {pilares.map((p) => (
             <button
               key={p.etiqueta}
@@ -122,14 +130,6 @@ export default function Catalogo() {
               {p.etiqueta}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={() => setChip("Todos")}
-            className="rounded-2xl px-6 py-8 text-center font-display text-2xl transition-colors duration-300 sm:col-span-2"
-            style={{ background: "var(--accent)", color: "var(--background)" }}
-          >
-            Ver todo el catálogo
-          </button>
         </div>
       ) : (
         <>
