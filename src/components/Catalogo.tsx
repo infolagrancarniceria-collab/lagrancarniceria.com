@@ -29,7 +29,7 @@ function ordenarCategorias(categorias: string[]): string[] {
   });
 }
 
-// Los 4 pilares grandes de la pantalla de entrada — a pedido del usuario,
+// Los pilares grandes de la pantalla de entrada — a pedido del usuario,
 // para que en el celular no haya que scrollear el catálogo entero para
 // llegar a lo que se busca. "candidatos" cubre variantes del nombre real
 // de la categoría (ej. el POS puede tener "Pollo" o "Aves"); se resuelve
@@ -40,6 +40,7 @@ const PILARES = [
   { etiqueta: "Cerdo", candidatos: ["cerdo"] },
   { etiqueta: "Aves", candidatos: ["pollo", "aves"] },
   { etiqueta: "Congelados", candidatos: ["congelados"] },
+  { etiqueta: "Artesanales", candidatos: ["artesanales"] },
 ];
 
 function resolverCategoria(categorias: string[], candidatos: string[]): string | null {
