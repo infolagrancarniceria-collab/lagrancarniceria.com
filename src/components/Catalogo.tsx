@@ -29,15 +29,42 @@ function ordenarCategorias(categorias: string[]): string[] {
   });
 }
 
+// Los 4 pilares grandes de la pantalla de entrada — a pedido del usuario,
+// para que en el celular no haya que scrollear el catálogo entero para
+// llegar a lo que se busca. "candidatos" cubre variantes del nombre real
+// de la categoría (ej. el POS puede tener "Pollo" o "Aves"); se resuelve
+// contra las categorías que realmente existen en el catálogo cargado, así
+// que un pilar sin productos hoy simplemente no se muestra.
+const PILARES = [
+  { etiqueta: "Vacuno", candidatos: ["vacuno"] },
+  { etiqueta: "Cerdo", candidatos: ["cerdo"] },
+  { etiqueta: "Aves", candidatos: ["pollo", "aves"] },
+  { etiqueta: "Congelados", candidatos: ["congelados"] },
+];
+
+function resolverCategoria(categorias: string[], candidatos: string[]): string | null {
+  const normalizados = candidatos.map((c) => c.toLowerCase());
+  return categorias.find((c) => normalizados.includes(c.trim().toLowerCase())) ?? null;
+}
+
 export default function Catalogo() {
   const { productos } = useCatalogoData();
   const [busqueda, setBusqueda] = useState("");
-  const [chip, setChip] = useState<string>("Todos");
+  // null = pantalla de entrada (los 5 pilares), sin filtro elegido todavía.
+  const [chip, setChip] = useState<string | null>(null);
   const [orden, setOrden] = useState<Orden>("relevancia");
 
   const categorias = useMemo(
     () => ordenarCategorias(Array.from(new Set(productos.map((p) => p.categoriaNombre)))),
     [productos]
+  );
+
+  const pilares = useMemo(
+    () =>
+      PILARES.map((p) => ({ etiqueta: p.etiqueta, categoria: resolverCategoria(categorias, p.candidatos) })).filter(
+        (p) => p.categoria != null
+      ),
+    [categorias]
   );
 
   const textoBusqueda = busqueda.trim().toLowerCase();
@@ -46,7 +73,7 @@ export default function Catalogo() {
   const filtrados = useMemo(() => {
     let lista = productos;
     if (chip === "Destacados") lista = lista.filter((p) => p.featured);
-    else if (chip !== "Todos") lista = lista.filter((p) => p.categoriaNombre === chip);
+    else if (chip && chip !== "Todos") lista = lista.filter((p) => p.categoriaNombre === chip);
 
     if (textoBusqueda) {
       lista = lista.filter((p) =>
@@ -81,7 +108,42 @@ export default function Catalogo() {
         Precios, stock y fotos referenciales, sujetos a confirmación por WhatsApp.
       </p>
 
-      <div className="mt-6 flex flex-col gap-4">
+      {chip === null ? (
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {pilares.map((p) => (
+            <button
+              key={p.etiqueta}
+              type="button"
+              onClick={() => setChip(p.categoria)}
+              className="rounded-2xl px-6 py-8 text-center font-display text-2xl transition-colors duration-300"
+              style={{ background: "var(--card)", color: "var(--text)", border: "1px solid var(--card-border)" }}
+            >
+              {p.etiqueta}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setChip("Todos")}
+            className="rounded-2xl px-6 py-8 text-center font-display text-2xl transition-colors duration-300 sm:col-span-2"
+            style={{ background: "var(--accent)", color: "var(--background)" }}
+          >
+            Ver todo el catálogo
+          </button>
+        </div>
+      ) : (
+        <>
+      <button
+        type="button"
+        onClick={() => {
+          setChip(null);
+          setBusqueda("");
+        }}
+        className="mt-6 text-sm font-medium text-accent"
+      >
+        ← Volver a categorías
+      </button>
+
+      <div className="mt-4 flex flex-col gap-4">
         <input
           type="search"
           value={busqueda}
@@ -150,6 +212,8 @@ export default function Catalogo() {
             <ProductoCard key={p.idPos} producto={p} />
           ))}
         </div>
+      )}
+        </>
       )}
     </section>
   );
