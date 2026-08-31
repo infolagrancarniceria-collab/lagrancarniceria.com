@@ -82,6 +82,28 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Congelados", palabras: ["aros", "cebolla"], slug: "con-aros-cebolla" },
   { categoriaNombre: "Congelados", palabras: ["pasta", "choclo"], slug: "con-pasta-choclo" },
   { categoriaNombre: "Congelados", palabras: ["choclo", "tierno"], slug: "con-choclo-tierno" },
+  // Fotos por peso/formato específico ("congelados 2.0") — cada una exige
+  // su propia combinación de palabras (incluyendo la marca cuando la foto
+  // es de una marca puntual) para no repetir la colisión ya corregida antes
+  // (ver "Sin regla genérica de choclo" más abajo).
+  { categoriaNombre: "Congelados", palabras: ["choclo", "grano", "200"], slug: "con-choclo-grano-200" },
+  { categoriaNombre: "Congelados", palabras: ["choclo", "grano"], slug: "con-choclo-grano-1kg" }, // genérico, después del de 200g
+  { categoriaNombre: "Congelados", palabras: ["choclo", "trozo"], slug: "con-choclo-trozo" },
+  { categoriaNombre: "Congelados", palabras: ["pastelera", "albahaca"], slug: "con-pastelera-albahaca" },
+  { categoriaNombre: "Congelados", palabras: ["papas", "duquesas"], slug: "con-papas-duquesas" },
+  { categoriaNombre: "Congelados", palabras: ["papas", "finas"], slug: "con-papas-finas" },
+  { categoriaNombre: "Congelados", palabras: ["arvejas", "200"], slug: "con-arvejas-200" },
+  { categoriaNombre: "Congelados", palabras: ["arvejas", "400"], slug: "con-arvejas-400" },
+  { categoriaNombre: "Congelados", palabras: ["habas", "400"], slug: "con-habas-400" },
+  { categoriaNombre: "Congelados", palabras: ["porotos", "granados"], slug: "con-porotos-granados" },
+  { categoriaNombre: "Congelados", palabras: ["porotos", "verdes", "maipo"], slug: "con-porotos-verdes-maipo" },
+  { categoriaNombre: "Congelados", palabras: ["berries", "maipo"], slug: "con-berries-maipo" },
+  { categoriaNombre: "Congelados", palabras: ["primavera", "minuto"], slug: "con-primavera-minuto-verde" },
+  { categoriaNombre: "Congelados", palabras: ["zapallo", "cubos"], slug: "con-zapallo-cubos" },
+  { categoriaNombre: "Congelados", palabras: ["sofrito", "ajo"], slug: "con-sofrito-ajo" },
+  { categoriaNombre: "Congelados", palabras: ["croqueta", "verdura"], slug: "con-croqueta-verduras" },
+  { categoriaNombre: "Congelados", palabras: ["crocante", "pollo"], slug: "con-crocante-pollo" },
+  { categoriaNombre: "Congelados", palabras: ["plant", "based"], slug: "con-plant-based-burger" },
   // Sin regla genérica de "choclo" a propósito: hay varios productos reales
   // con nombres de choclo distintos (grano, trozo, pastelera, etc.) que no
   // son el mismo corte/formato que la foto que se tiene — mejor sin foto
@@ -90,7 +112,8 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Congelados", palabras: ["salmon", "natural"], slug: "con-salmon-natural" },
   { categoriaNombre: "Congelados", palabras: ["salmon", "empanizado"], slug: "con-salmon-empanizado" },
   { categoriaNombre: "Congelados", palabras: ["mix", "berries"], slug: "con-mix-berries" },
-  { categoriaNombre: "Congelados", palabras: ["nuggets"], slug: "con-nuggets-pollo" },
+  { categoriaNombre: "Congelados", palabras: ["nugget", "verdura"], slug: "con-nuggets-verduras" },
+  { categoriaNombre: "Congelados", palabras: ["nuggets", "pollo"], slug: "con-nuggets-pollo" }, // acotado a "pollo" para no chocar con nuggets de verduras
   // "maipo" a propósito: hay papas fritas de otras marcas (Minuto Verde,
   // Fundo Sorno) con envase distinto al que se fotografió.
   { categoriaNombre: "Congelados", palabras: ["papas", "fritas", "maipo"], slug: "con-papas-fritas" },
