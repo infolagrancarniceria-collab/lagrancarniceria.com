@@ -113,7 +113,10 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Congelados", palabras: ["salmon", "empanizado"], slug: "con-salmon-empanizado" },
   { categoriaNombre: "Congelados", palabras: ["mix", "berries"], slug: "con-mix-berries" },
   { categoriaNombre: "Congelados", palabras: ["nugget", "verdura"], slug: "con-nuggets-verduras" },
-  { categoriaNombre: "Congelados", palabras: ["nuggets", "pollo"], slug: "con-nuggets-pollo" }, // acotado a "pollo" para no chocar con nuggets de verduras
+  // "nugget" en singular (no "nuggets") porque el producto real en el POS
+  // se llama "Nugget de Pollo" — con la palabra en plural nunca calzaba,
+  // el mismo tipo de error que "Americano"/"Asado Americano" antes.
+  { categoriaNombre: "Congelados", palabras: ["nugget", "pollo"], slug: "con-nuggets-pollo" },
   // "maipo" a propósito: hay papas fritas de otras marcas (Minuto Verde,
   // Fundo Sorno) con envase distinto al que se fotografió.
   { categoriaNombre: "Congelados", palabras: ["papas", "fritas", "maipo"], slug: "con-papas-fritas" },
