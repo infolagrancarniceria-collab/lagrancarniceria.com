@@ -7,7 +7,7 @@ const PREGUNTAS = [
   {
     pregunta: "¿Hacen despacho a domicilio?",
     respuesta:
-      "Sí. Los primeros 5 pedidos antes de las 15:00 se despachan el mismo día; el resto, y los realizados después de las 16:00, al día siguiente. No hacemos despachos los domingos.",
+      "Sí. Los primeros 5 pedidos del día, hechos antes de las 15:00, se despachan ese mismo día; después de esa hora (o pasado ese cupo) el pedido queda agendado para el día siguiente. No hacemos despachos los domingos.",
   },
   {
     pregunta: "¿Qué medios de pago aceptan?",

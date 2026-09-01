@@ -193,6 +193,11 @@ export default function ConfirmarDrawer() {
               className="rounded-lg px-3 py-2 text-sm font-normal outline-none"
               style={{ border: "1px solid var(--card-border)" }}
             />
+            <span className="text-xs font-normal text-muted">
+              Solo tomamos los primeros 5 pedidos del día para despachar ese mismo día, y hasta las 15:00 — después
+              de esa hora (o pasado ese cupo) el pedido queda agendado para el día siguiente. Te confirmamos por
+              WhatsApp si tu pedido queda para hoy o no.
+            </span>
           </label>
 
           <label className="flex flex-col gap-1 text-sm font-semibold text-dark">

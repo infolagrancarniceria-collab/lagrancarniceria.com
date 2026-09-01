@@ -14,8 +14,8 @@ export default function Despacho() {
         className="mt-4 inline-block rounded-full px-5 py-2 text-sm font-semibold"
         style={{ background: "var(--accent)", color: "var(--background)" }}
       >
-        Los primeros 5 pedidos antes de las 15:00 se despachan el mismo día · el resto, y los de después de las
-        16:00, al día siguiente · domingos sin despacho
+        Los primeros 5 pedidos del día, hechos antes de las 15:00, se despachan ese mismo día — después de esa hora
+        (o pasado ese cupo) el pedido queda agendado para el día siguiente · domingos sin despacho
       </div>
 
       <p className="mt-4 text-sm text-muted">
