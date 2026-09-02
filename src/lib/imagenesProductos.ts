@@ -42,6 +42,9 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Cerdo", palabras: ["filete"], slug: "cer-filete" },
   { categoriaNombre: "Cerdo", palabras: ["costillitas", "baby"], slug: "cer-costillitas-baby" },
   { categoriaNombre: "Cerdo", palabras: ["pulpa", "45"], slug: "cer-pulpa-45" },
+  { categoriaNombre: "Cerdo", palabras: ["abastero"], slug: "cer-abastero" },
+  { categoriaNombre: "Cerdo", palabras: ["plateada"], slug: "cer-plateada-lomo" },
+  { categoriaNombre: "Cerdo", palabras: ["costillar", "entero"], slug: "cer-costillar-entero" },
 
   // --- Vacuno ---
   { categoriaNombre: "Vacuno", palabras: ["patas"], slug: "vac-patas" },
@@ -64,6 +67,7 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Vacuno", palabras: ["carne", "picada"], slug: "vac-carne-picada" },
   { categoriaNombre: "Vacuno", palabras: ["posta", "rosada"], slug: "vac-posta-rosada" },
   { categoriaNombre: "Vacuno", palabras: ["posta", "paleta"], slug: "vac-posta-paleta" },
+  { categoriaNombre: "Vacuno", palabras: ["punta", "paleta"], slug: "vac-punta-paleta" },
   { categoriaNombre: "Vacuno", palabras: ["posta", "negra"], slug: "vac-posta-negra" },
   { categoriaNombre: "Vacuno", palabras: ["asiento"], slug: "vac-asiento" },
   { categoriaNombre: "Vacuno", palabras: ["flat"], slug: "vac-flat-iron" },
@@ -120,6 +124,11 @@ const REGLAS: ReglaImagen[] = [
   // "maipo" a propósito: hay papas fritas de otras marcas (Minuto Verde,
   // Fundo Sorno) con envase distinto al que se fotografió.
   { categoriaNombre: "Congelados", palabras: ["papas", "fritas", "maipo"], slug: "con-papas-fritas" },
+  // "sorno" (no "fundosorno" ni "frigosorno" completos) porque el envase
+  // dice "FUNDOSORNO — Una marca Frigosorno" — cualquiera de las dos
+  // formas que se termine escribiendo en la descripción real contiene
+  // "sorno", así que calza igual sin depender de cuál se use.
+  { categoriaNombre: "Congelados", palabras: ["papas", "fritas", "sorno"], slug: "con-papas-fritas-frigosorno" },
   { categoriaNombre: "Congelados", palabras: ["pulpa", "maracuya"], slug: "con-pulpa-maracuya" },
 
   // --- Artesanales ---
@@ -127,6 +136,19 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Artesanales", palabras: ["choripan", "tradicional"], slug: "art-choripan-tradicional" },
   { categoriaNombre: "Artesanales", palabras: ["choripan", "picante"], slug: "art-choripan-picante" },
   { categoriaNombre: "Artesanales", palabras: ["longaniza", "picante"], slug: "art-longaniza-picante" },
+  { categoriaNombre: "Artesanales", palabras: ["longaniza", "tradicional"], slug: "art-longaniza-tradicional" },
+  { categoriaNombre: "Artesanales", palabras: ["costillar", "ahumado"], slug: "art-costillar-ahumado" },
+  { categoriaNombre: "Artesanales", palabras: ["pastrami"], slug: "art-pastrami" },
+  { categoriaNombre: "Artesanales", palabras: ["butifarra"], slug: "art-butifarra" },
+  { categoriaNombre: "Artesanales", palabras: ["prieta"], slug: "art-prietas" },
+  // Las 3 hamburguesas se distinguen por la etiqueta real ya impresa en la
+  // foto (peso/nombre tal como sale en el ticket de balanza): "Hamburguesa
+  // Grande 150 grs", "Hamburguesa Artesanal 100 grs" y "Hamburguesa Queso
+  // 150 grs" — por eso "grande"/"100"/"queso" en vez de adivinar el
+  // gramaje solos (mismo error que "Asado Americano"/"Nuggets" antes).
+  { categoriaNombre: "Artesanales", palabras: ["hamburguesa", "queso"], slug: "art-hamburguesa-queso" },
+  { categoriaNombre: "Artesanales", palabras: ["hamburguesa", "grande"], slug: "art-hamburguesa-150g" },
+  { categoriaNombre: "Artesanales", palabras: ["hamburguesa", "100"], slug: "art-hamburguesa-100g" },
 
   // --- Pollo — quedó fuera de la carga real del POS (sin PLU confiable en
   // el documento de rediseño), así que ya nace dependiendo por completo de
