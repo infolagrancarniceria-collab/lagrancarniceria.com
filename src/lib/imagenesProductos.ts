@@ -198,12 +198,17 @@ function categoriaCoincide(categoriaRegla: string, categoriaProducto: string): b
 // Devuelve la ruta pública de la foto del producto, o null si no hay una
 // emparejada — quien la use debe manejar el caso sin foto (ver
 // ProductoCard), no todos los productos tienen una todavía.
-export function imagenProducto(producto: { descripcion: string; categoriaNombre: string }): string | null {
-  const descripcionNormalizada = normalizar(producto.descripcion);
+//
+// Se busca tanto en la descripción como en la marca (ej. "Papas Fritas
+// 2.5kg" con marca "Fundosorno" — la marca queda en su propio campo, no
+// repetida en la descripción, así que una regla que solo mirara la
+// descripción nunca la habría encontrado).
+export function imagenProducto(producto: { descripcion: string; categoriaNombre: string; marca?: string | null }): string | null {
+  const textoNormalizado = normalizar(`${producto.descripcion} ${producto.marca ?? ""}`);
   const regla = REGLAS.find(
     ({ categoriaNombre, palabras }) =>
       categoriaCoincide(categoriaNombre, producto.categoriaNombre) &&
-      palabras.every((palabra) => descripcionNormalizada.includes(palabra))
+      palabras.every((palabra) => textoNormalizado.includes(palabra))
   );
   return regla ? `/productos/prod-${regla.slug}.webp` : null;
 }
