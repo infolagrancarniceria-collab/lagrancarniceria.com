@@ -7,9 +7,9 @@ import ProductoCard from "./ProductoCard";
 
 const ORDEN_CATEGORIAS = [
   "Combos",
+  "Vacuno",
   "Pollo",
   "Cerdo",
-  "Vacuno",
   "Artesanales",
   "Congelados",
   "Envasado Entero",
@@ -37,10 +37,10 @@ function ordenarCategorias(categorias: string[]): string[] {
 // que un pilar sin productos hoy simplemente no se muestra.
 const PILARES = [
   { etiqueta: "Vacuno", candidatos: ["vacuno"] },
-  { etiqueta: "Cerdo", candidatos: ["cerdo"] },
   { etiqueta: "Aves", candidatos: ["pollo", "aves"] },
-  { etiqueta: "Congelados", candidatos: ["congelados"] },
+  { etiqueta: "Cerdo", candidatos: ["cerdo"] },
   { etiqueta: "Artesanales", candidatos: ["artesanales"] },
+  { etiqueta: "Congelados", candidatos: ["congelados"] },
 ];
 
 function resolverCategoria(categorias: string[], candidatos: string[]): string | null {
