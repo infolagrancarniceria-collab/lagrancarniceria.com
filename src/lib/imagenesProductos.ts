@@ -38,6 +38,11 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Cerdo", palabras: ["chuleta", "centro"], slug: "cer-chuleta-centro" },
   { categoriaNombre: "Cerdo", palabras: ["lomo", "centro"], slug: "cer-lomo-centro" },
   { categoriaNombre: "Cerdo", palabras: ["malaya", "chica"], slug: "cer-malaya-chica" },
+  // El producto real quedó cargado como "Malaya 400gr" (no "Malaya de
+  // Cerdo Chica 400 g", como se había supuesto al armar la regla de
+  // arriba) — mismo tipo de error que "Asado Americano"/"Nuggets" antes:
+  // el nombre real no traía "chica". Va a la misma foto (cer-malaya-chica).
+  { categoriaNombre: "Cerdo", palabras: ["malaya", "400"], slug: "cer-malaya-chica" },
   { categoriaNombre: "Cerdo", palabras: ["malaya", "900"], slug: "cer-malaya-900" },
   { categoriaNombre: "Cerdo", palabras: ["filete"], slug: "cer-filete" },
   { categoriaNombre: "Cerdo", palabras: ["costillitas", "baby"], slug: "cer-costillitas-baby" },
