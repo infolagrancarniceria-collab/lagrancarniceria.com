@@ -176,6 +176,15 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Pollo", palabras: ["contre"], slug: "pol-contre" },
   { categoriaNombre: "Pollo", palabras: ["corazon"], slug: "pol-corazon" },
   { categoriaNombre: "Pollo", palabras: ["filete"], slug: "pol-filete" },
+
+  // --- Combos ---
+  // Fotos promocionales (con precio/ingredientes escritos en la imagen, a
+  // pedido del usuario) — una por combo, matcheadas por una palabra bien
+  // distintiva del nombre de cada uno.
+  { categoriaNombre: "Combos", palabras: ["premium"], slug: "com-premium" },
+  { categoriaNombre: "Combos", palabras: ["clasico"], slug: "com-clasico" },
+  { categoriaNombre: "Combos", palabras: ["parrillero"], slug: "com-parrillero" },
+  { categoriaNombre: "Combos", palabras: ["familiar"], slug: "com-familiar" },
 ];
 
 function normalizar(texto: string): string {
