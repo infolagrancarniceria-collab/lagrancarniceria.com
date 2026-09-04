@@ -28,3 +28,12 @@ export function opcionesCorte(cortes: CorteOpcionPublica[], familia: string | nu
     .sort((a, b) => a.orden - b.orden)
     .map((c) => c.nombre);
 }
+
+// "Entero,Trozado, Para la parrilla" -> ["Entero", "Trozado", "Para la parrilla"]
+export function opcionesUnidad(valor: string | null): string[] {
+  if (!valor) return [];
+  return valor
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}

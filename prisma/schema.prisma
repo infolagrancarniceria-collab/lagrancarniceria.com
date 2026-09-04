@@ -58,6 +58,16 @@ model Producto {
   promoGramosMinimos  Int?
   promoEtiqueta       String?
 
+  // Opciones de preparación por unidad (ej. "Entero,Trozado,Para la
+  // parrilla") — solo para productos por unidad. Si tiene valor, el
+  // cotizador pide una elección independiente por cada unidad pedida (ej.
+  // 3 pollos enteros: 2 "Entero" y 1 "Para la parrilla") en vez de una sola
+  // elección para todo el pedido. Lista separada por comas, sin tabla
+  // aparte (a diferencia de CorteOpcion/familiaCorte, que son por familia
+  // de corte para productos por peso) porque es específico de este
+  // producto, no compartido entre varios.
+  opcionesUnidad String?
+
   actualizadoEn DateTime @updatedAt
 }
 

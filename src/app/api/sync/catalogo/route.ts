@@ -37,6 +37,7 @@ const productoSchema = z.object({
   promoPrecioUnitario: z.number().nullable(),
   promoGramosMinimos: z.number().int().nullable(),
   promoEtiqueta: z.string().nullable(),
+  opcionesUnidad: z.string().nullable(),
 });
 
 const bodySchema = z.object({
