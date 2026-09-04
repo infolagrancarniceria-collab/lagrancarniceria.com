@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useCatalogoData, opcionesCorte } from "@/lib/catalogoData";
+import { useCatalogoData, opcionesCorte, opcionesUnidad as parseOpcionesUnidad } from "@/lib/catalogoData";
 import { useCart, type Envasado } from "@/lib/cart";
 import { formatoCLP } from "@/lib/format";
 import { useUi } from "@/lib/ui";
@@ -48,7 +48,9 @@ function CotizadorFormulario({
   const { cerrarCotizador } = useUi();
   const { agregar } = useCart();
   const opciones = useMemo(() => opcionesCorte(cortes, p.familiaCorte), [cortes, p.familiaCorte]);
+  const opcionesPorUnidad = useMemo(() => parseOpcionesUnidad(p.opcionesUnidad), [p.opcionesUnidad]);
   const esPeso = p.unidad === "kg";
+  const pidePreparacionPorUnidad = !esPeso && opcionesPorUnidad.length > 0;
 
   // El peso se edita en kilos, como texto libre (no un <input type="number">
   // en gramos): así se puede escribir "1.3" directo, que es como la gente
@@ -61,6 +63,23 @@ function CotizadorFormulario({
   const [corte, setCorte] = useState<string | null>(opciones[0] ?? null);
   const [envasado, setEnvasado] = useState<Envasado | null>(esPeso ? "Tradicional" : null);
   const [instrucciones, setInstrucciones] = useState("");
+  // Una elección de preparación por cada unidad pedida (ej. 3 pollos
+  // enteros: ["Entero", "Entero", "Para la parrilla"]) — se mantiene del
+  // mismo largo que cantidadUnidades (ver cambiarCantidadUnidades).
+  const [seleccionUnidad, setSeleccionUnidad] = useState<string[]>(() =>
+    pidePreparacionPorUnidad ? [opcionesPorUnidad[0]] : []
+  );
+
+  function cambiarCantidadUnidades(nueva: number) {
+    const cantidad = Math.max(1, nueva);
+    setCantidadUnidades(cantidad);
+    if (!pidePreparacionPorUnidad) return;
+    setSeleccionUnidad((actual) => {
+      if (cantidad === actual.length) return actual;
+      if (cantidad < actual.length) return actual.slice(0, cantidad);
+      return [...actual, ...Array(cantidad - actual.length).fill(opcionesPorUnidad[0])];
+    });
+  }
 
   const pesoGramosTexto = Math.round((parseFloat(pesoKgTexto.replace(",", ".")) || 0) * 1000);
   const pesoGramos = pesoGramosTexto > 0 ? pesoGramosTexto : PESO_MINIMO;
@@ -109,7 +128,21 @@ function CotizadorFormulario({
     // cortar esa cantidad de piezas, no solo pesar un pedazo cualquiera
     // hasta llegar al peso.
     const notaTrozos = trozosAprox != null ? `≈${trozosAprox} trozo${trozosAprox === 1 ? "" : "s"} aprox.` : null;
-    const instruccionesFinal = [notaTrozos, instrucciones.trim() || null].filter(Boolean).join(" — ") || null;
+    // Agrupa las elecciones por unidad en algo legible (ej. "2x Entero, 1x
+    // Para la parrilla") en vez de listar cada unidad por separado.
+    const notaPreparacion =
+      seleccionUnidad.length > 0
+        ? Object.entries(
+            seleccionUnidad.reduce<Record<string, number>>((acc, o) => {
+              acc[o] = (acc[o] ?? 0) + 1;
+              return acc;
+            }, {})
+          )
+            .map(([opcion, cantidad]) => (cantidad > 1 ? `${cantidad}x ${opcion}` : opcion))
+            .join(", ")
+        : null;
+    const instruccionesFinal =
+      [notaTrozos, notaPreparacion, instrucciones.trim() || null].filter(Boolean).join(" — ") || null;
 
     agregar(
       {
@@ -220,7 +253,7 @@ function CotizadorFormulario({
           <div className="mt-5 flex items-center justify-center gap-6 rounded-xl p-6" style={{ background: "var(--dark)" }}>
             <button
               type="button"
-              onClick={() => setCantidadUnidades((n) => Math.max(1, n - 1))}
+              onClick={() => cambiarCantidadUnidades(cantidadUnidades - 1)}
               className="h-11 w-11 rounded-full text-xl font-bold text-background"
               style={{ border: "1px solid rgba(196,165,116,.4)" }}
             >
@@ -229,12 +262,42 @@ function CotizadorFormulario({
             <span className="tabular font-sans text-3xl font-bold text-background">{cantidadUnidades}</span>
             <button
               type="button"
-              onClick={() => setCantidadUnidades((n) => n + 1)}
+              onClick={() => cambiarCantidadUnidades(cantidadUnidades + 1)}
               className="h-11 w-11 rounded-full text-xl font-bold text-background"
               style={{ border: "1px solid rgba(196,165,116,.4)" }}
             >
               +
             </button>
+          </div>
+        )}
+
+        {pidePreparacionPorUnidad && (
+          <div className="mt-5">
+            <p className="text-sm font-semibold text-dark">Preparación de cada unidad</p>
+            <div className="mt-2 flex flex-col gap-2">
+              {seleccionUnidad.map((elegida, i) => (
+                <div key={i} className="flex flex-wrap items-center gap-2">
+                  <span className="w-20 shrink-0 text-sm text-muted">Unidad {i + 1}</span>
+                  {opcionesPorUnidad.map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      onClick={() =>
+                        setSeleccionUnidad((actual) => actual.map((v, j) => (j === i ? o : v)))
+                      }
+                      className="rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-300"
+                      style={
+                        elegida === o
+                          ? { background: "var(--accent)", color: "var(--background)" }
+                          : { background: "var(--surface)", color: "var(--text)", border: "1px solid var(--card-border)" }
+                      }
+                    >
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

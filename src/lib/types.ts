@@ -24,6 +24,10 @@ export interface ProductoPublico {
   promoPrecioUnitario: number | null;
   promoGramosMinimos: number | null;
   promoEtiqueta: string | null;
+  // Opciones de preparación por unidad (ej. "Entero,Trozado,Para la
+  // parrilla"), separadas por coma — solo para productos por unidad. Si
+  // tiene valor, el cotizador pide una elección por cada unidad pedida.
+  opcionesUnidad: string | null;
 }
 
 export interface ComunaPublica {
@@ -59,6 +63,7 @@ export function aProductoPublico(p: {
   promoPrecioUnitario: number | null;
   promoGramosMinimos: number | null;
   promoEtiqueta: string | null;
+  opcionesUnidad: string | null;
 }): ProductoPublico {
   return {
     idPos: p.idPos,
@@ -78,5 +83,6 @@ export function aProductoPublico(p: {
     promoPrecioUnitario: p.promoPrecioUnitario,
     promoGramosMinimos: p.promoGramosMinimos,
     promoEtiqueta: p.promoEtiqueta,
+    opcionesUnidad: p.opcionesUnidad,
   };
 }
