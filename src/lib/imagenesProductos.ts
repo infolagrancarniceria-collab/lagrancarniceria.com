@@ -50,6 +50,7 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Cerdo", palabras: ["abastero"], slug: "cer-abastero" },
   { categoriaNombre: "Cerdo", palabras: ["plateada"], slug: "cer-plateada-lomo" },
   { categoriaNombre: "Cerdo", palabras: ["costillar", "entero"], slug: "cer-costillar-entero" },
+  { categoriaNombre: "Cerdo", palabras: ["jamon", "pierna"], slug: "cer-jamon-pierna" },
 
   // --- Vacuno ---
   { categoriaNombre: "Vacuno", palabras: ["patas"], slug: "vac-patas" },
@@ -84,6 +85,8 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Vacuno", palabras: ["entrana"], slug: "vac-entrana" },
   { categoriaNombre: "Vacuno", palabras: ["guata"], slug: "vac-guata" },
   { categoriaNombre: "Vacuno", palabras: ["pana"], slug: "vac-pana" },
+  { categoriaNombre: "Vacuno", palabras: ["aletilla"], slug: "vac-aletilla" },
+  { categoriaNombre: "Vacuno", palabras: ["hueso", "carnudo"], slug: "vac-hueso-carnudo" },
 
   // --- Congelados ---
   { categoriaNombre: "Congelados", palabras: ["ala", "centro"], slug: "con-ala-centro" },
@@ -126,6 +129,7 @@ const REGLAS: ReglaImagen[] = [
   // se llama "Nugget de Pollo" — con la palabra en plural nunca calzaba,
   // el mismo tipo de error que "Americano"/"Asado Americano" antes.
   { categoriaNombre: "Congelados", palabras: ["nugget", "pollo"], slug: "con-nuggets-pollo" },
+  { categoriaNombre: "Congelados", palabras: ["capinugget"], slug: "con-capinuggets" },
   // "maipo" a propósito: hay papas fritas de otras marcas (Minuto Verde,
   // Fundo Sorno) con envase distinto al que se fotografió.
   { categoriaNombre: "Congelados", palabras: ["papas", "fritas", "maipo"], slug: "con-papas-fritas" },
