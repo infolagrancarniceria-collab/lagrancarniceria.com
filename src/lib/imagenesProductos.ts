@@ -165,6 +165,11 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Pollo", palabras: ["trutro", "largo"], slug: "pol-trutro-largo" },
   { categoriaNombre: "Pollo", palabras: ["trutro", "barquillo"], slug: "pol-trutro-largo" },
   { categoriaNombre: "Pollo", palabras: ["trutro", "entero"], slug: "pol-trutro-entero" },
+  // El producto real en el POS quedó cargado como "TRUTO CUARTO DE POLLO"
+  // (sin la segunda R) — va con "truto" tal cual, no "trutro", porque con
+  // la palabra completa nunca calzaba (mismo tipo de error que "Malaya
+  // 400gr" antes).
+  { categoriaNombre: "Pollo", palabras: ["truto", "cuarto"], slug: "pol-trutro-cuarto" },
   { categoriaNombre: "Pollo", palabras: ["trutro", "corto"], slug: "pol-trutro-corto" },
   { categoriaNombre: "Pollo", palabras: ["trutro", "deshuesado"], slug: "pol-trutro-deshuesado" },
   { categoriaNombre: "Pollo", palabras: ["trutro", "ala"], slug: "pol-trutro-ala" },
