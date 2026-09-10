@@ -12,6 +12,7 @@ const NAV = [
   { href: "#faq", label: "FAQ" },
   { href: "#contacto", label: "Contacto" },
   { href: "#resenas", label: "Reseñas" },
+  { href: "#mis-pedidos", label: "Mis pedidos" },
 ];
 
 export default function Header() {

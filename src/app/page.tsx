@@ -6,6 +6,7 @@ import Despacho from "@/components/Despacho";
 import Faq from "@/components/Faq";
 import Contacto from "@/components/Contacto";
 import Resenas from "@/components/Resenas";
+import MisPedidos from "@/components/MisPedidos";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
       <Faq />
       <Contacto />
       <Resenas />
+      <MisPedidos />
     </>
   );
 }
