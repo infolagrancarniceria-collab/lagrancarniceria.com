@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useCatalogoData } from "@/lib/catalogoData";
+import { construirJsonLdProductos } from "@/lib/structuredData";
 import type { ProductoPublico } from "@/lib/types";
 import ProductoCard from "./ProductoCard";
 
@@ -91,6 +92,8 @@ export default function Catalogo() {
     return lista;
   }, [productos, chip, textoBusqueda, orden]);
 
+  const jsonLdProductos = useMemo(() => construirJsonLdProductos(productos), [productos]);
+
   const agrupados = useMemo(() => {
     if (!sinFiltros) return null;
     const mapa = new Map<string, ProductoPublico[]>();
@@ -104,6 +107,7 @@ export default function Catalogo() {
 
   return (
     <section id="catalogo" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdProductos) }} />
       <h2 className="font-display text-3xl text-dark sm:text-4xl">Catálogo</h2>
       <p className="mt-2 text-sm text-muted">
         Precios, stock y fotos referenciales, sujetos a confirmación por WhatsApp.
