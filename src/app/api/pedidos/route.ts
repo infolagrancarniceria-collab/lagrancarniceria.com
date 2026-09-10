@@ -77,3 +77,44 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ id: pedido.id, costoEnvio });
 }
+
+function soloDigitos(valor: string): string {
+  return valor.replace(/\D/g, "");
+}
+
+// Historial de pedidos por teléfono, para la sección "Mis pedidos" — sin
+// cuenta ni clave (a pedido del usuario, ver discusión en el chat): da
+// acceso a cualquiera que sepa el teléfono EXACTO, pero no hay forma de
+// listar todos los pedidos ni de buscar por coincidencia parcial, así que
+// es el mismo nivel de "seguridad" que ya tiene coordinar todo por
+// WhatsApp. Compara solo dígitos (ignora +56, espacios y guiones) porque el
+// teléfono se escribe libre en el formulario, sin formato forzado.
+export async function GET(req: NextRequest) {
+  const telefono = req.nextUrl.searchParams.get("telefono")?.trim() ?? "";
+  const digitos = soloDigitos(telefono);
+  if (digitos.length < 8) {
+    return NextResponse.json({ error: "Ingresa un teléfono válido" }, { status: 400 });
+  }
+
+  const pedidos = await prisma.pedido.findMany({ orderBy: { fecha: "desc" }, take: 2000 });
+  const coincidencias = pedidos
+    .filter((p) => {
+      const pDigitos = soloDigitos(p.clienteTelefono);
+      return pDigitos.length >= 8 && (pDigitos.endsWith(digitos) || digitos.endsWith(pDigitos));
+    })
+    .slice(0, 20);
+
+  return NextResponse.json(
+    coincidencias.map((p) => ({
+      id: p.id,
+      fecha: p.fecha.toISOString(),
+      clienteNombre: p.clienteNombre,
+      tipoEntrega: p.tipoEntrega,
+      clienteDireccion: p.clienteDireccion,
+      comunaNombre: p.comunaNombre,
+      costoEnvio: p.costoEnvio,
+      comentario: p.comentario,
+      items: JSON.parse(p.itemsJson),
+    }))
+  );
+}

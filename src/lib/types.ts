@@ -30,6 +30,31 @@ export interface ProductoPublico {
   opcionesUnidad: string | null;
 }
 
+export interface ItemPedidoHistorial {
+  plu: string;
+  descripcion: string;
+  corte: string | null;
+  envasado: Envasado | null;
+  instrucciones: string | null;
+  cantidad: number;
+  unidad: UnidadVenta;
+  precioUnitario: number;
+}
+
+// Respuesta de GET /api/pedidos?telefono=... (ver "Mis pedidos") — un
+// pedido pasado tal como quedó guardado, no como está hoy en el catálogo.
+export interface PedidoHistorial {
+  id: string;
+  fecha: string;
+  clienteNombre: string;
+  tipoEntrega: TipoEntrega;
+  clienteDireccion: string | null;
+  comunaNombre: string | null;
+  costoEnvio: number | null;
+  comentario: string | null;
+  items: ItemPedidoHistorial[];
+}
+
 export interface ComunaPublica {
   nombre: string;
   costoEnvio: number;
