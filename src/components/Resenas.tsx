@@ -1,9 +1,18 @@
-// Sin reseñas reales todavía — no se inventan testimonios ni nombres de
-// clientes (el prompt de diseño pide no inventar datos que no estén en él,
-// y esa regla aplica más todavía a citas atribuidas a personas reales).
-// Cuando el negocio tenga reseñas reales, se cargan acá como
-// { nombre, texto } y la grilla de abajo las reemplaza automáticamente.
-const RESENAS: { nombre: string; texto: string }[] = [];
+// Reseñas reales de clientes — no se inventan testimonios ni nombres (el
+// prompt de diseño pide no inventar datos que no estén en él, y esa regla
+// aplica más todavía a citas atribuidas a personas reales). Se cargan acá
+// como { nombre, texto, estrellas } a medida que van llegando por el
+// formulario de reseñas, ya filtradas por las que autorizaron publicarse.
+const RESENAS: { nombre: string; texto: string; estrellas: number }[] = [];
+
+function Estrellas({ cantidad }: { cantidad: number }) {
+  return (
+    <div aria-label={`${cantidad} de 5 estrellas`} className="text-sm leading-none" style={{ color: "var(--gold)" }}>
+      {"★".repeat(cantidad)}
+      <span style={{ color: "var(--card-border)" }}>{"★".repeat(5 - cantidad)}</span>
+    </div>
+  );
+}
 
 export default function Resenas() {
   return (
@@ -16,9 +25,10 @@ export default function Resenas() {
         </p>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {RESENAS.map((r) => (
-            <blockquote key={r.nombre} className="rounded-xl bg-card p-5" style={{ border: "1px solid var(--card-border)" }}>
-              <p className="text-text">&ldquo;{r.texto}&rdquo;</p>
+          {RESENAS.map((r, i) => (
+            <blockquote key={`${r.nombre}-${i}`} className="rounded-xl bg-card p-5" style={{ border: "1px solid var(--card-border)" }}>
+              <Estrellas cantidad={r.estrellas} />
+              <p className="mt-2 text-text">&ldquo;{r.texto}&rdquo;</p>
               <footer className="mt-3 text-sm font-semibold text-accent">{r.nombre}</footer>
             </blockquote>
           ))}
