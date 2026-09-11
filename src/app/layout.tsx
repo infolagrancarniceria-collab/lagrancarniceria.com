@@ -7,7 +7,6 @@ import Providers from "@/components/Providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BotonWhatsappFlotante from "@/components/BotonWhatsappFlotante";
-import PopupOferta from "@/components/PopupOferta";
 import CotizadorModal from "@/components/CotizadorModal";
 import CarritoDrawer from "@/components/CarritoDrawer";
 import ConfirmarDrawer from "@/components/ConfirmarDrawer";
@@ -115,7 +114,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <main className="flex-1">{children}</main>
           <Footer />
           <BotonWhatsappFlotante />
-          <PopupOferta />
           <CotizadorModal />
           <CarritoDrawer />
           <ConfirmarDrawer />
