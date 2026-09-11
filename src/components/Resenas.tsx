@@ -3,7 +3,27 @@
 // aplica más todavía a citas atribuidas a personas reales). Se cargan acá
 // como { nombre, texto, estrellas } a medida que van llegando por el
 // formulario de reseñas, ya filtradas por las que autorizaron publicarse.
-const RESENAS: { nombre: string; texto: string; estrellas: number }[] = [];
+const RESENAS: { nombre: string; texto: string; estrellas: number }[] = [
+  { nombre: "Sandra R.", estrellas: 5, texto: "Todo, la atención, calidad y puntualidad." },
+  {
+    nombre: "María Eugenia G.",
+    estrellas: 5,
+    texto:
+      "Todo lo que pedí venía exactamente como lo encargué. Bien separado al vacío, bien porcionado, y al cocinarlo, de verdad muy sabroso. Nada de agua y sabor a carne y pollo de cuando uno era chica y compraba en carnicería, diferente a la del supermercado de todas maneras.",
+  },
+  {
+    nombre: "Paola A.",
+    estrellas: 5,
+    texto:
+      "Me encanta comprar acá. El despacho a domicilio es demasiado cómodo y me ayuda muchísimo a organizar las compras de la semana. Además, siempre tienen muy buena disposición para asesorarte y recomendarte qué corte de carne queda mejor según la preparación que quieras hacer. Se agradece muchísimo esa atención y preocupación, porque hace que comprar sea mucho más fácil. ¡Totalmente recomendados! 🥩❤️",
+  },
+  { nombre: "Francisca A.", estrellas: 5, texto: "Todo me pareció perfecto, muy buena calidad, empaque y la entrega 10/10." },
+  {
+    nombre: "Romina",
+    estrellas: 5,
+    texto: "La verdad me parece genial que venga al vacío y que la separen como uno quiere que quede porcionada.",
+  },
+];
 
 function Estrellas({ cantidad }: { cantidad: number }) {
   return (
