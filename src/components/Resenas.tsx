@@ -4,7 +4,7 @@
 // como { nombre, texto, estrellas } a medida que van llegando por el
 // formulario de reseñas, ya filtradas por las que autorizaron publicarse.
 const RESENAS: { nombre: string; texto: string; estrellas: number }[] = [
-  { nombre: "Sandra R.", estrellas: 5, texto: "Todo, la atención, calidad y puntualidad." },
+  { nombre: "Sandra R.", estrellas: 5, texto: "Todo bien, la atención, calidad y puntualidad." },
   {
     nombre: "María Eugenia G.",
     estrellas: 5,
