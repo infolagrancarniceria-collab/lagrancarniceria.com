@@ -23,6 +23,23 @@ const RESENAS: { nombre: string; texto: string; estrellas: number }[] = [
     estrellas: 5,
     texto: "La verdad me parece genial que venga al vacío y que la separen como uno quiere que quede porcionada.",
   },
+  {
+    nombre: "Valentina.",
+    estrellas: 5,
+    texto: "Me gustó mucho la atención personalizada personalizada y lo bien organizade que viene todo, además de fresquito.",
+  },
+  {
+    nombre: "Génessis M.",
+    estrellas: 5,
+    texto:
+      "muy buena atención, se solicitó la carne buena atención, se solicitó la carne limpia y para la parrilla y lo hicieronnn, muy agradecidos. precios acorde a la calidad y buen precio de delivery. comprándoles x años en cerro navia 🙏",
+  },
+  {
+    nombre: "Carlos D.",
+    estrellas: 5,
+    texto:
+      "Excelente calidad de todos los productos, atención personalizada, muy preocupados de los detalles y del resultado de la entrega, la cual fue al momento preciso de necesitarlo. 100% recomendables",
+  },
 ];
 
 function Estrellas({ cantidad }: { cantidad: number }) {
