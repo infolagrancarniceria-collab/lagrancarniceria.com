@@ -150,6 +150,7 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Artesanales", palabras: ["pastrami"], slug: "art-pastrami" },
   { categoriaNombre: "Artesanales", palabras: ["butifarra"], slug: "art-butifarra" },
   { categoriaNombre: "Artesanales", palabras: ["prieta"], slug: "art-prietas" },
+  { categoriaNombre: "Artesanales", palabras: ["arrollado", "huaso"], slug: "art-arrollado-huaso" },
   // Las 3 hamburguesas se distinguen por la etiqueta real ya impresa en la
   // foto (peso/nombre tal como sale en el ticket de balanza): "Hamburguesa
   // Grande 150 grs", "Hamburguesa Artesanal 100 grs" y "Hamburguesa Queso
