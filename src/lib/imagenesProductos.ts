@@ -165,6 +165,11 @@ const REGLAS: ReglaImagen[] = [
   // la descripción.
   { categoriaNombre: "Pollo", palabras: ["trutro", "largo"], slug: "pol-trutro-largo" },
   { categoriaNombre: "Pollo", palabras: ["trutro", "barquillo"], slug: "pol-trutro-largo" },
+  // Va antes que la regla de "trutro"+"entero" de abajo (que si no, le
+  // ganaría por venir primero y calzar igual de bien, mostrando la foto
+  // con hueso en vez de esta) — mismo criterio que explica el comentario
+  // del encabezado sobre el orden de las reglas.
+  { categoriaNombre: "Pollo", palabras: ["trutro", "entero", "deshuesado"], slug: "pol-trutro-entero-deshuesado" },
   { categoriaNombre: "Pollo", palabras: ["trutro", "entero"], slug: "pol-trutro-entero" },
   // El producto real en el POS quedó cargado como "TRUTO CUARTO DE POLLO"
   // (sin la segunda R) — va con "truto" tal cual, no "trutro", porque con
