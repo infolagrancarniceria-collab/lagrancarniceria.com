@@ -4,6 +4,7 @@ import Image from "next/image";
 import { badgeProducto } from "@/lib/badges";
 import { formatoCLP } from "@/lib/format";
 import { imagenProducto } from "@/lib/imagenesProductos";
+import { esArtesanal, nombreVisible } from "@/lib/subMarca";
 import { useUi } from "@/lib/ui";
 import type { ProductoPublico } from "@/lib/types";
 
@@ -43,7 +44,12 @@ export default function ProductoCard({ producto }: { producto: ProductoPublico }
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">{producto.categoriaNombre}</p>
+        <p
+          className="text-xs font-semibold uppercase tracking-wide"
+          style={{ color: esArtesanal(producto.categoriaNombre) ? "var(--gold)" : "var(--accent)" }}
+        >
+          {nombreVisible(producto.categoriaNombre)}
+        </p>
         <h3 className="font-display text-lg leading-snug text-dark">{producto.descripcion}</h3>
         {producto.marca && <p className="text-sm font-bold text-accent">{producto.marca}</p>}
         {producto.descripcionCorta && <p className="text-sm text-muted">{producto.descripcionCorta}</p>}
