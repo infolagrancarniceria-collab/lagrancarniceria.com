@@ -7,27 +7,47 @@ import { esArtesanal, nombreVisible } from "@/lib/subMarca";
 import type { ProductoPublico } from "@/lib/types";
 import ProductoCard from "./ProductoCard";
 
-const ORDEN_CATEGORIAS = [
-  "Combos",
-  "Vacuno",
-  // El POS carga esta categoría como "Aves", no "Pollo" (ver PILARES más
-  // abajo, que ya contempla las dos variantes) — se incluyen ambos nombres
-  // acá para que quede bien ordenada sin importar cuál esté cargado.
-  "Pollo",
-  "Aves",
-  "Cerdo",
-  "Artesanales",
-  "Congelados",
-  "Envasado Entero",
-  "Frutas y Hortalizas",
-];
+// El nombre real de una categoría en el catálogo (cargado a mano en el POS)
+// no siempre calza textualmente con lo que se supone acá — ya pasó que
+// "Pollo" se terminó cargando como "Aves". Para no repetir ese bug cada vez
+// que cambie una mayúscula o quede un espacio de más, TODA comparación de
+// categoría pasa por esta normalización (sin tildes/mayúsculas/espacios
+// extra) en vez de comparar el string tal cual.
+function normalizarCategoria(c: string): string {
+  return c
+    .trim()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
+// Única fuente de verdad de "qué nombres reales puede tener cada categoría"
+// — el orden de este array ES el orden de despliegue, y los mismos
+// "equivalentes" se usan tanto para ordenar (ordenarCategorias) como para
+// resolver los pilares grandes de la pantalla de entrada (PILARES más
+// abajo), así las dos cosas no pueden quedar desincronizadas entre sí.
+const CATEGORIAS_CONOCIDAS = [
+  { etiqueta: "Combos", equivalentes: ["combos"] },
+  { etiqueta: "Vacuno", equivalentes: ["vacuno"] },
+  { etiqueta: "Pollo", equivalentes: ["pollo", "aves"] },
+  { etiqueta: "Cerdo", equivalentes: ["cerdo"] },
+  { etiqueta: "Artesanales", equivalentes: ["artesanales"] },
+  { etiqueta: "Congelados", equivalentes: ["congelados"] },
+  { etiqueta: "Envasado Entero", equivalentes: ["envasado entero"] },
+  { etiqueta: "Frutas y Hortalizas", equivalentes: ["frutas y hortalizas"] },
+].map((c) => ({ ...c, equivalentes: c.equivalentes.map(normalizarCategoria) }));
+
+function indiceCategoria(categoria: string): number {
+  const norm = normalizarCategoria(categoria);
+  return CATEGORIAS_CONOCIDAS.findIndex((c) => c.equivalentes.includes(norm));
+}
 
 type Orden = "relevancia" | "precio-asc" | "precio-desc" | "nombre";
 
 function ordenarCategorias(categorias: string[]): string[] {
   return [...categorias].sort((a, b) => {
-    const ia = ORDEN_CATEGORIAS.indexOf(a);
-    const ib = ORDEN_CATEGORIAS.indexOf(b);
+    const ia = indiceCategoria(a);
+    const ib = indiceCategoria(b);
     if (ia !== -1 && ib !== -1) return ia - ib;
     if (ia !== -1) return -1;
     if (ib !== -1) return 1;
@@ -37,21 +57,16 @@ function ordenarCategorias(categorias: string[]): string[] {
 
 // Los pilares grandes de la pantalla de entrada — a pedido del usuario,
 // para que en el celular no haya que scrollear el catálogo entero para
-// llegar a lo que se busca. "candidatos" cubre variantes del nombre real
-// de la categoría (ej. el POS puede tener "Pollo" o "Aves"); se resuelve
-// contra las categorías que realmente existen en el catálogo cargado, así
-// que un pilar sin productos hoy simplemente no se muestra.
-const PILARES = [
-  { etiqueta: "Vacuno", candidatos: ["vacuno"] },
-  { etiqueta: "Aves", candidatos: ["pollo", "aves"] },
-  { etiqueta: "Cerdo", candidatos: ["cerdo"] },
-  { etiqueta: "Artesanales", candidatos: ["artesanales"] },
-  { etiqueta: "Congelados", candidatos: ["congelados"] },
-];
+// llegar a lo que se busca. Solo una parte de CATEGORIAS_CONOCIDAS tiene
+// pilar propio; se resuelve contra las categorías que realmente existen en
+// el catálogo cargado, así que un pilar sin productos hoy simplemente no
+// se muestra.
+const ETIQUETAS_PILARES = ["Vacuno", "Pollo", "Cerdo", "Artesanales", "Congelados"];
 
-function resolverCategoria(categorias: string[], candidatos: string[]): string | null {
-  const normalizados = candidatos.map((c) => c.toLowerCase());
-  return categorias.find((c) => normalizados.includes(c.trim().toLowerCase())) ?? null;
+function resolverCategoria(categorias: string[], etiqueta: string): string | null {
+  const entrada = CATEGORIAS_CONOCIDAS.find((c) => c.etiqueta === etiqueta);
+  if (!entrada) return null;
+  return categorias.find((c) => entrada.equivalentes.includes(normalizarCategoria(c))) ?? null;
 }
 
 export default function Catalogo() {
@@ -68,7 +83,7 @@ export default function Catalogo() {
 
   const pilares = useMemo(
     () =>
-      PILARES.map((p) => ({ etiqueta: p.etiqueta, categoria: resolverCategoria(categorias, p.candidatos) })).filter(
+      ETIQUETAS_PILARES.map((etiqueta) => ({ etiqueta, categoria: resolverCategoria(categorias, etiqueta) })).filter(
         (p) => p.categoria != null
       ),
     [categorias]
