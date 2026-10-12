@@ -186,6 +186,7 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Pollo", palabras: ["pechuga", "trozo"], slug: "pol-pechuga-trozo" },
   { categoriaNombre: "Pollo", palabras: ["pechuga", "deshuesada"], slug: "pol-pechuga-deshuesada" },
   { categoriaNombre: "Pollo", palabras: ["ala", "entera"], slug: "pol-ala-entera" },
+  { categoriaNombre: "Pollo", palabras: ["avion"], slug: "pol-aviones" },
   { categoriaNombre: "Pollo", palabras: ["pollo", "entero"], slug: "pol-entero" },
   { categoriaNombre: "Pollo", palabras: ["panita"], slug: "pol-panita" },
   { categoriaNombre: "Pollo", palabras: ["pana"], slug: "pol-panita" }, // "pana" = forma corta/coloquial de "panita" (higado de pollo)
