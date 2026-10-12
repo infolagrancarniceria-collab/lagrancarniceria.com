@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useCatalogoData } from "@/lib/catalogoData";
 import { construirJsonLdProductos } from "@/lib/structuredData";
+import { esArtesanal, nombreVisible } from "@/lib/subMarca";
 import type { ProductoPublico } from "@/lib/types";
 import ProductoCard from "./ProductoCard";
 
@@ -127,17 +128,25 @@ export default function Catalogo() {
           >
             Ver todo el catálogo
           </button>
-          {pilares.map((p) => (
-            <button
-              key={p.etiqueta}
-              type="button"
-              onClick={() => setChip(p.categoria)}
-              className="rounded-2xl px-6 py-8 text-center font-display text-2xl transition-colors duration-300"
-              style={{ background: "var(--card)", color: "var(--text)", border: "1px solid var(--card-border)" }}
-            >
-              {p.etiqueta}
-            </button>
-          ))}
+          {pilares.map((p) => {
+            const charcuteria = p.categoria != null && esArtesanal(p.categoria);
+            return (
+              <button
+                key={p.etiqueta}
+                type="button"
+                onClick={() => setChip(p.categoria)}
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl px-6 py-8 text-center transition-colors duration-300"
+                style={
+                  charcuteria
+                    ? { background: "var(--dark)", color: "var(--gold)", border: "1px solid var(--gold)" }
+                    : { background: "var(--card)", color: "var(--text)", border: "1px solid var(--card-border)" }
+                }
+              >
+                <span className="font-display text-2xl">{charcuteria ? "La Gran Charcutería" : p.etiqueta}</span>
+                {charcuteria && <span className="text-xs font-medium tracking-wide opacity-80">Productos artesanales</span>}
+              </button>
+            );
+          })}
         </div>
       ) : (
         <>
@@ -175,7 +184,7 @@ export default function Catalogo() {
                   : { background: "var(--card)", color: "var(--text)", border: "1px solid var(--card-border)" }
               }
             >
-              {c}
+              {nombreVisible(c)}
             </button>
           ))}
         </div>
@@ -204,7 +213,12 @@ export default function Catalogo() {
           {agrupados.map(([categoria, items]) => (
             <div key={categoria}>
               <div className="mb-4 flex items-center gap-4">
-                <h3 className="whitespace-nowrap font-display text-2xl text-accent">{categoria}</h3>
+                <h3
+                  className="whitespace-nowrap font-display text-2xl"
+                  style={{ color: esArtesanal(categoria) ? "var(--gold)" : "var(--accent)" }}
+                >
+                  {nombreVisible(categoria)}
+                </h3>
                 <span className="separador-categoria flex-1" />
               </div>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
