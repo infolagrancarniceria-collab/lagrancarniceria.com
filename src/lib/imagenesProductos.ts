@@ -37,6 +37,7 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Cerdo", palabras: ["chuleta", "parrillera"], slug: "cer-chuleta-parrillera" },
   { categoriaNombre: "Cerdo", palabras: ["chuleta", "centro"], slug: "cer-chuleta-centro" },
   { categoriaNombre: "Cerdo", palabras: ["lomo", "centro"], slug: "cer-lomo-centro" },
+  { categoriaNombre: "Cerdo", palabras: ["lomo", "vetado"], slug: "cer-lomo-vetado" },
   { categoriaNombre: "Cerdo", palabras: ["malaya", "chica"], slug: "cer-malaya-chica" },
   // El producto real quedó cargado como "Malaya 400gr" (no "Malaya de
   // Cerdo Chica 400 g", como se había supuesto al armar la regla de
@@ -54,8 +55,10 @@ const REGLAS: ReglaImagen[] = [
 
   // --- Vacuno ---
   { categoriaNombre: "Vacuno", palabras: ["patas"], slug: "vac-patas" },
+  { categoriaNombre: "Vacuno", palabras: ["bife", "angosto"], slug: "vac-bife-angosto" },
   { categoriaNombre: "Vacuno", palabras: ["molida", "especial"], slug: "vac-molida-especial" },
   { categoriaNombre: "Vacuno", palabras: ["molida", "corriente"], slug: "vac-molida-corriente" },
+  { categoriaNombre: "Vacuno", palabras: ["molida", "tartaro"], slug: "vac-molida-tartaro" },
   { categoriaNombre: "Vacuno", palabras: ["sobrecostilla"], slug: "vac-sobrecostilla" },
   { categoriaNombre: "Vacuno", palabras: ["huachalomo"], slug: "vac-huachalomo" },
   { categoriaNombre: "Vacuno", palabras: ["pollo", "ganso"], slug: "vac-pollo-ganso" },
@@ -191,6 +194,10 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Pollo", palabras: ["contre"], slug: "pol-contre" },
   { categoriaNombre: "Pollo", palabras: ["corazon"], slug: "pol-corazon" },
   { categoriaNombre: "Pollo", palabras: ["filete"], slug: "pol-filete" },
+
+  // --- Mariscos y Pescado ---
+  { categoriaNombre: "Mariscos y Pescado", palabras: ["camaron"], slug: "mar-camarones" },
+  { categoriaNombre: "Mariscos y Pescado", palabras: ["merluza"], slug: "mar-merluza" },
 
   // --- Combos ---
   // Fotos promocionales (con precio/ingredientes escritos en la imagen, a
