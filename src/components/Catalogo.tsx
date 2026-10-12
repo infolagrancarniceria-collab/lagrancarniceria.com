@@ -9,7 +9,11 @@ import ProductoCard from "./ProductoCard";
 const ORDEN_CATEGORIAS = [
   "Combos",
   "Vacuno",
+  // El POS carga esta categoría como "Aves", no "Pollo" (ver PILARES más
+  // abajo, que ya contempla las dos variantes) — se incluyen ambos nombres
+  // acá para que quede bien ordenada sin importar cuál esté cargado.
   "Pollo",
+  "Aves",
   "Cerdo",
   "Artesanales",
   "Congelados",
