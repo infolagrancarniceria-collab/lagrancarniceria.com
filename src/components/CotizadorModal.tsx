@@ -240,7 +240,10 @@ function CotizadorFormulario({
                     +
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gold opacity-80">Peso estimado — se ajusta al pesar de verdad.</p>
+                <p className="mt-1 text-xs text-gold opacity-80">
+                  El peso según la cantidad de trozos es estimativo — el total se confirma siempre por WhatsApp, así
+                  que puede haber variaciones en el precio final según lo que se pese de verdad.
+                </p>
               </div>
             )}
           </div>
