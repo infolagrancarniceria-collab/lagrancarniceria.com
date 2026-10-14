@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCatalogoData } from "@/lib/catalogoData";
 import { construirJsonLdProductos } from "@/lib/structuredData";
 import { esArtesanal, nombreVisible } from "@/lib/subMarca";
@@ -75,6 +75,23 @@ export default function Catalogo() {
   // null = pantalla de entrada (los 5 pilares), sin filtro elegido todavía.
   const [chip, setChip] = useState<string | null>(null);
   const [orden, setOrden] = useState<Orden>("relevancia");
+  const [mostrarSubir, setMostrarSubir] = useState(false);
+  const filtrosTopRef = useRef<HTMLDivElement>(null);
+
+  // Al cambiar de categoría (o entrar a la vista filtrada), vuelve al tope
+  // de la lista — en mobile, antes había que scrollear todo el camino de
+  // vuelta para arriba a mano cada vez que se cambiaba de chip.
+  useEffect(() => {
+    if (chip !== null) filtrosTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [chip]);
+
+  useEffect(() => {
+    function onScroll() {
+      setMostrarSubir(window.scrollY > 600);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const categorias = useMemo(
     () => ordenarCategorias(Array.from(new Set(productos.map((p) => p.categoriaNombre)))),
@@ -138,7 +155,24 @@ export default function Catalogo() {
       </p>
 
       {chip === null ? (
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-8 flex flex-col gap-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (busqueda.trim()) setChip("Todos");
+            }}
+          >
+            <input
+              type="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar producto…"
+              className="w-full rounded-full bg-card px-5 py-3 text-sm outline-none"
+              style={{ border: "1px solid var(--card-border)" }}
+            />
+          </form>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => setChip("Todos")}
@@ -166,59 +200,67 @@ export default function Catalogo() {
               </button>
             );
           })}
+          </div>
         </div>
       ) : (
         <>
-      <button
-        type="button"
-        onClick={() => {
-          setChip(null);
-          setBusqueda("");
-        }}
-        className="mt-6 text-sm font-medium text-accent"
-      >
-        ← Volver a categorías
-      </button>
-
-      <div className="mt-4 flex flex-col gap-4">
-        <input
-          type="search"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar producto…"
-          className="w-full rounded-full bg-card px-5 py-3 text-sm outline-none"
-          style={{ border: "1px solid var(--card-border)" }}
-        />
-
-        <div className="flex flex-wrap gap-2">
-          {["Todos", "Destacados", ...categorias].map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setChip(c)}
-              className="rounded-full px-4 py-2 text-sm font-medium transition-colors duration-300"
-              style={
-                chip === c
-                  ? { background: "var(--accent)", color: "var(--background)" }
-                  : { background: "var(--card)", color: "var(--text)", border: "1px solid var(--card-border)" }
-              }
-            >
-              {nombreVisible(c)}
-            </button>
-          ))}
-        </div>
-
-        <select
-          value={orden}
-          onChange={(e) => setOrden(e.target.value as Orden)}
-          className="w-fit rounded-full bg-card px-4 py-2 text-sm outline-none"
-          style={{ border: "1px solid var(--card-border)" }}
+      {/* Ancla sin "sticky": sirve de referencia real de scroll para volver
+          al tope de la lista al cambiar de chip — si el ref apuntara a la
+          barra sticky de abajo, el navegador la ve "ya visible" (al quedar
+          pegada arriba) y el scroll-to-top no hace nada. */}
+      <div ref={filtrosTopRef} className="scroll-mt-24" />
+      <div className="sticky top-24 z-30 -mx-4 bg-background px-4 pb-4 pt-2">
+        <button
+          type="button"
+          onClick={() => {
+            setChip(null);
+            setBusqueda("");
+          }}
+          className="mb-4 text-sm font-medium text-accent"
         >
-          <option value="relevancia">Ordenar: relevancia</option>
-          <option value="precio-asc">Precio: menor a mayor</option>
-          <option value="precio-desc">Precio: mayor a menor</option>
-          <option value="nombre">Nombre A-Z</option>
-        </select>
+          ← Volver a categorías
+        </button>
+
+        <div className="flex flex-col gap-4">
+          <input
+            type="search"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar producto…"
+            className="w-full rounded-full bg-card px-5 py-3 text-sm outline-none"
+            style={{ border: "1px solid var(--card-border)" }}
+          />
+
+          <div className="flex flex-wrap gap-2">
+            {["Todos", "Destacados", ...categorias].map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setChip(c)}
+                className="rounded-full px-4 py-2 text-sm font-medium transition-colors duration-300"
+                style={
+                  chip === c
+                    ? { background: "var(--accent)", color: "var(--background)" }
+                    : { background: "var(--card)", color: "var(--text)", border: "1px solid var(--card-border)" }
+                }
+              >
+                {nombreVisible(c)}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={orden}
+            onChange={(e) => setOrden(e.target.value as Orden)}
+            className="w-fit rounded-full bg-card px-4 py-2 text-sm outline-none"
+            style={{ border: "1px solid var(--card-border)" }}
+          >
+            <option value="relevancia">Ordenar: relevancia</option>
+            <option value="precio-asc">Precio: menor a mayor</option>
+            <option value="precio-desc">Precio: mayor a menor</option>
+            <option value="nombre">Nombre A-Z</option>
+          </select>
+        </div>
       </div>
 
       {filtrados.length === 0 && (
@@ -256,6 +298,18 @@ export default function Catalogo() {
         </div>
       )}
         </>
+      )}
+
+      {mostrarSubir && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Subir al inicio"
+          className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold shadow-lg"
+          style={{ background: "var(--accent)", color: "var(--background)" }}
+        >
+          ↑
+        </button>
       )}
     </section>
   );
