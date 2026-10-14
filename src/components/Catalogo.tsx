@@ -76,18 +76,77 @@ export default function Catalogo() {
   const [chip, setChip] = useState<string | null>(null);
   const [orden, setOrden] = useState<Orden>("relevancia");
   const [mostrarSubir, setMostrarSubir] = useState(false);
+  // La barra de filtros se achica (solo categorías, en una fila) mientras
+  // se scrollea hacia abajo leyendo productos, y se vuelve a abrir apenas
+  // se scrollea hacia arriba — así deja de taparle pantalla al catálogo en
+  // mobile sin perder el acceso rápido a cambiar de categoría.
+  const [colapsada, setColapsada] = useState(false);
   const filtrosTopRef = useRef<HTMLDivElement>(null);
+  const ultimoScrollY = useRef(0);
+  // Mientras el scroll lo movemos nosotros (al cambiar de categoría o al
+  // tocar "Subir"), no debe contar como el gesto de scroll del usuario que
+  // colapsa/expande la barra — si no, la animación del scroll automático
+  // queda parpadeando entre abierta y cerrada.
+  const scrollProgramatico = useRef(false);
+
+  // Ignora el scroll que provocamos nosotros mismos (al moverlo a mano, o
+  // el que el navegador corrige solo cuando la barra sticky cambia de
+  // alto — "scroll anchoring" — para que no se lea como un gesto del
+  // usuario y rebote colapsando/expandiendo la barra sin parar.
+  function silenciarScroll(ms: number) {
+    scrollProgramatico.current = true;
+    window.setTimeout(() => {
+      scrollProgramatico.current = false;
+    }, ms);
+  }
+
+  function scrollSuaveA(destino: number) {
+    silenciarScroll(700);
+    window.scrollTo({ top: destino, behavior: "smooth" });
+  }
+
+  // Cambia de categoría y deja la barra de filtros expandida — se usa en
+  // vez de "setChip" directo en todos los botones que eligen categoría.
+  function elegirChip(valor: string | null) {
+    setChip(valor);
+    setColapsada(false);
+  }
 
   // Al cambiar de categoría (o entrar a la vista filtrada), vuelve al tope
   // de la lista — en mobile, antes había que scrollear todo el camino de
   // vuelta para arriba a mano cada vez que se cambiaba de chip.
   useEffect(() => {
-    if (chip !== null) filtrosTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (chip === null) return;
+    const destino = (filtrosTopRef.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 96;
+    scrollSuaveA(Math.max(destino, 0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chip]);
 
   useEffect(() => {
+    ultimoScrollY.current = window.scrollY;
     function onScroll() {
-      setMostrarSubir(window.scrollY > 600);
+      const y = window.scrollY;
+      setMostrarSubir(y > 600);
+      if (scrollProgramatico.current) {
+        ultimoScrollY.current = y;
+        return;
+      }
+      // Umbral de 10px para no abrir/cerrar la barra con cada pixel que
+      // tiembla el scroll (en touchpads/mobile el valor rara vez es
+      // perfectamente estable) — solo reacciona a un gesto real.
+      const delta = y - ultimoScrollY.current;
+      if (y <= 140) {
+        setColapsada(false);
+      } else if (delta > 10) {
+        setColapsada(true);
+        silenciarScroll(400);
+      } else if (delta < -10) {
+        setColapsada(false);
+        silenciarScroll(400);
+      } else {
+        return;
+      }
+      ultimoScrollY.current = y;
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -159,7 +218,7 @@ export default function Catalogo() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (busqueda.trim()) setChip("Todos");
+              if (busqueda.trim()) elegirChip("Todos");
             }}
           >
             <input
@@ -175,7 +234,7 @@ export default function Catalogo() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <button
             type="button"
-            onClick={() => setChip("Todos")}
+            onClick={() => elegirChip("Todos")}
             className="rounded-2xl px-6 py-8 text-center font-display text-2xl transition-colors duration-300 sm:col-span-2"
             style={{ background: "var(--accent)", color: "var(--background)" }}
           >
@@ -187,7 +246,7 @@ export default function Catalogo() {
               <button
                 key={p.etiqueta}
                 type="button"
-                onClick={() => setChip(p.categoria)}
+                onClick={() => elegirChip(p.categoria)}
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl px-6 py-8 text-center transition-colors duration-300"
                 style={
                   charcuteria
@@ -209,19 +268,28 @@ export default function Catalogo() {
           barra sticky de abajo, el navegador la ve "ya visible" (al quedar
           pegada arriba) y el scroll-to-top no hace nada. */}
       <div ref={filtrosTopRef} className="scroll-mt-24" />
-      <div className="sticky top-24 z-30 -mx-4 bg-background px-4 pb-4 pt-2">
-        <button
-          type="button"
-          onClick={() => {
-            setChip(null);
-            setBusqueda("");
-          }}
-          className="mb-4 text-sm font-medium text-accent"
+      <div
+        className={`sticky top-24 z-30 -mx-4 bg-background px-4 transition-[padding] duration-300 ${
+          colapsada ? "pb-2 pt-2" : "pb-4 pt-2"
+        }`}
+        style={{ overflowAnchor: "none" }}
+      >
+        <div
+          className={`overflow-hidden transition-[max-height,opacity] duration-300 ${
+            colapsada ? "max-h-0 opacity-0" : "mb-4 max-h-32 opacity-100"
+          }`}
         >
-          ← Volver a categorías
-        </button>
+          <button
+            type="button"
+            onClick={() => {
+              setChip(null);
+              setBusqueda("");
+            }}
+            className="mb-4 text-sm font-medium text-accent"
+          >
+            ← Volver a categorías
+          </button>
 
-        <div className="flex flex-col gap-4">
           <input
             type="search"
             value={busqueda}
@@ -230,25 +298,36 @@ export default function Catalogo() {
             className="w-full rounded-full bg-card px-5 py-3 text-sm outline-none"
             style={{ border: "1px solid var(--card-border)" }}
           />
+        </div>
 
-          <div className="flex flex-wrap gap-2">
-            {["Todos", "Destacados", ...categorias].map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setChip(c)}
-                className="rounded-full px-4 py-2 text-sm font-medium transition-colors duration-300"
-                style={
-                  chip === c
-                    ? { background: "var(--accent)", color: "var(--background)" }
-                    : { background: "var(--card)", color: "var(--text)", border: "1px solid var(--card-border)" }
-                }
-              >
-                {nombreVisible(c)}
-              </button>
-            ))}
-          </div>
+        <div
+          className={`flex gap-2 ${
+            colapsada ? "flex-nowrap overflow-x-auto" : "flex-wrap"
+          }`}
+          style={{ scrollbarWidth: "none" }}
+        >
+          {["Todos", "Destacados", ...categorias].map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => elegirChip(c)}
+              className="shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors duration-300"
+              style={
+                chip === c
+                  ? { background: "var(--accent)", color: "var(--background)" }
+                  : { background: "var(--card)", color: "var(--text)", border: "1px solid var(--card-border)" }
+              }
+            >
+              {nombreVisible(c)}
+            </button>
+          ))}
+        </div>
 
+        <div
+          className={`overflow-hidden transition-[max-height,opacity] duration-300 ${
+            colapsada ? "max-h-0 opacity-0" : "mt-4 max-h-24 opacity-100"
+          }`}
+        >
           <select
             value={orden}
             onChange={(e) => setOrden(e.target.value as Orden)}
@@ -282,7 +361,7 @@ export default function Catalogo() {
                 </h3>
                 <span className="separador-categoria flex-1" />
               </div>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
                 {items.map((p) => (
                   <ProductoCard key={p.idPos} producto={p} />
                 ))}
@@ -291,7 +370,7 @@ export default function Catalogo() {
           ))}
         </div>
       ) : (
-        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
           {filtrados.map((p) => (
             <ProductoCard key={p.idPos} producto={p} />
           ))}
@@ -303,7 +382,7 @@ export default function Catalogo() {
       {mostrarSubir && (
         <button
           type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          onClick={() => scrollSuaveA(0)}
           aria-label="Subir al inicio"
           className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold shadow-lg"
           style={{ background: "var(--accent)", color: "var(--background)" }}
