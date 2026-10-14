@@ -81,7 +81,7 @@ export default function ProductoCard({ producto }: { producto: ProductoPublico }
             ? "Agotado"
             : producto.disponibilidad === "proximamente"
               ? "Próximamente"
-              : "Cotizar"}
+              : "Agregar al pedido"}
         </button>
       </div>
     </article>

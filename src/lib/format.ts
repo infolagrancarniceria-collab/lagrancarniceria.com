@@ -18,3 +18,13 @@ export function formatoPeso(gramos: number): string {
 export function redondear50(gramos: number): number {
   return Math.round(gramos / 50) * 50;
 }
+
+// "2026-10-20" (valor de un <input type="date">) -> "martes 20 de octubre" —
+// se arma la fecha con año/mes/día sueltos (no "new Date(fechaISO)" directo)
+// para que no se corra un día por la zona horaria del navegador, que
+// interpretaría la fecha-sola como medianoche UTC.
+export function formatoFechaLegible(fechaISO: string): string {
+  const [anio, mes, dia] = fechaISO.split("-").map(Number);
+  const fecha = new Date(anio, mes - 1, dia);
+  return fecha.toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
+}
