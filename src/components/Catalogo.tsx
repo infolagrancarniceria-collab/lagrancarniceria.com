@@ -129,8 +129,12 @@ export default function Catalogo() {
     <section id="catalogo" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdProductos) }} />
       <h2 className="font-display text-3xl text-dark sm:text-4xl">Catálogo</h2>
-      <p className="mt-2 text-sm text-muted">
-        Precios, stock y fotos referenciales, sujetos a confirmación por WhatsApp.
+      <p
+        className="mt-3 rounded-lg px-4 py-3 text-sm font-medium text-dark"
+        style={{ background: "var(--surface)", border: "1px solid var(--gold)" }}
+      >
+        ℹ️ Los precios, el stock y las fotos son referenciales — el total final siempre se confirma por WhatsApp
+        antes de despachar o entregar tu pedido.
       </p>
 
       {chip === null ? (

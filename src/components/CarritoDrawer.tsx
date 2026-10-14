@@ -59,7 +59,7 @@ export default function CarritoDrawer() {
                           // cotizador al agregar.
                           actualizarCantidad(item.idPos, item.corte, nueva < minimo(item.unidad) ? 0 : nueva);
                         }}
-                        className="h-8 w-8 rounded-full text-sm font-bold"
+                        className="h-11 w-11 rounded-full text-base font-bold"
                         style={{ border: "1px solid var(--card-border)" }}
                       >
                         −
@@ -72,7 +72,7 @@ export default function CarritoDrawer() {
                         onClick={() =>
                           actualizarCantidad(item.idPos, item.corte, Math.max(minimo(item.unidad), item.cantidad + paso(item.unidad)))
                         }
-                        className="h-8 w-8 rounded-full text-sm font-bold"
+                        className="h-11 w-11 rounded-full text-base font-bold"
                         style={{ border: "1px solid var(--card-border)" }}
                       >
                         +

@@ -228,7 +228,7 @@ function CotizadorFormulario({
                   <button
                     type="button"
                     onClick={() => elegirTrozos(trozosAprox - 1)}
-                    className="h-9 w-9 rounded-full text-lg font-bold text-background"
+                    className="h-11 w-11 rounded-full text-lg font-bold text-background"
                     style={{ border: "1px solid rgba(196,165,116,.4)" }}
                   >
                     −
@@ -239,7 +239,7 @@ function CotizadorFormulario({
                   <button
                     type="button"
                     onClick={() => elegirTrozos(trozosAprox + 1)}
-                    className="h-9 w-9 rounded-full text-lg font-bold text-background"
+                    className="h-11 w-11 rounded-full text-lg font-bold text-background"
                     style={{ border: "1px solid rgba(196,165,116,.4)" }}
                   >
                     +
