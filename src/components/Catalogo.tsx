@@ -32,6 +32,7 @@ const CATEGORIAS_CONOCIDAS = [
   { etiqueta: "Pollo", equivalentes: ["pollo", "aves"] },
   { etiqueta: "Cerdo", equivalentes: ["cerdo"] },
   { etiqueta: "Artesanales", equivalentes: ["artesanales"] },
+  { etiqueta: "Quesos", equivalentes: ["quesos", "queso"] },
   { etiqueta: "Congelados", equivalentes: ["congelados"] },
   { etiqueta: "Envasado Entero", equivalentes: ["envasado entero"] },
   { etiqueta: "Frutas y Hortalizas", equivalentes: ["frutas y hortalizas"] },
@@ -61,7 +62,7 @@ function ordenarCategorias(categorias: string[]): string[] {
 // pilar propio; se resuelve contra las categorías que realmente existen en
 // el catálogo cargado, así que un pilar sin productos hoy simplemente no
 // se muestra.
-const ETIQUETAS_PILARES = ["Vacuno", "Pollo", "Cerdo", "Artesanales", "Congelados"];
+const ETIQUETAS_PILARES = ["Vacuno", "Pollo", "Cerdo", "Artesanales", "Quesos", "Congelados"];
 
 function resolverCategoria(categorias: string[], etiqueta: string): string | null {
   const entrada = CATEGORIAS_CONOCIDAS.find((c) => c.etiqueta === etiqueta);

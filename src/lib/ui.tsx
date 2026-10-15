@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ProductoPublico } from "./types";
 
 interface UiContextValue {
@@ -23,6 +23,32 @@ export function UiProvider({ children }: { children: ReactNode }) {
   const [productoCotizando, setProductoCotizando] = useState<ProductoPublico | null>(null);
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [confirmarAbierto, setConfirmarAbierto] = useState(false);
+
+  // Con algún overlay (cotizador/carrito/confirmar) abierto, se congela el
+  // scroll del fondo — si no, en mobile el navegador se confunde sobre qué
+  // contenedor scrollear al enfocar un campo y aparecer el teclado (el
+  // fondo "de atrás" se mueve en vez del formulario), dejando campos del
+  // overlay inalcanzables aunque sigan ahí. Se fija el body en su posición
+  // actual (no solo overflow:hidden, que iOS Safari ignora al tocar y
+  // arrastrar) y se restaura el scroll exacto al cerrar.
+  const overlayAbierto = carritoAbierto || confirmarAbierto || productoCotizando !== null;
+  useEffect(() => {
+    if (!overlayAbierto) return;
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    const originalPosition = style.position;
+    const originalTop = style.top;
+    const originalWidth = style.width;
+    style.position = "fixed";
+    style.top = `-${scrollY}px`;
+    style.width = "100%";
+    return () => {
+      style.position = originalPosition;
+      style.top = originalTop;
+      style.width = originalWidth;
+      window.scrollTo(0, scrollY);
+    };
+  }, [overlayAbierto]);
 
   const value = useMemo<UiContextValue>(
     () => ({
