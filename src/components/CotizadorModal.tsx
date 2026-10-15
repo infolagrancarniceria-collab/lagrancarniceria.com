@@ -157,7 +157,7 @@ function CotizadorFormulario({
 
   return (
     <div
-      className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-6 sm:rounded-2xl"
+      className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-6 sm:rounded-2xl"
       style={{ boxShadow: "0 -8px 30px rgba(0,0,0,.25)" }}
       onClick={(e) => e.stopPropagation()}
     >

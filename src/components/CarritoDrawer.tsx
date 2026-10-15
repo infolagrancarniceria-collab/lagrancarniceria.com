@@ -17,7 +17,7 @@ export default function CarritoDrawer() {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={cerrarCarrito}>
       <div
-        className="max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-6"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-6"
         style={{ boxShadow: "0 -8px 30px rgba(0,0,0,.25)" }}
         onClick={(e) => e.stopPropagation()}
       >
