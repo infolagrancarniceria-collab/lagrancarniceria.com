@@ -45,3 +45,14 @@ body {
   background: linear-gradient(90deg, var(--gold), transparent);
   height: 1px;
 }
+
+/* Los campos de formulario nunca deben quedar bajo 16px: con texto más
+   chico, Safari en iOS hace zoom automático al enfocar el campo y
+   vuelve a achicar la pantalla al salir de él — eso se siente como que
+   la página "salta" sola mientras se llena un formulario (ej. al pasar
+   de un campo a otro en "Confirmar pedido"). */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
