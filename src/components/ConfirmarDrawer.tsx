@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useCatalogoData } from "@/lib/catalogoData";
 import { useCart } from "@/lib/cart";
+import { cargarClienteGuardado, guardarClienteGuardado, olvidarClienteGuardado } from "@/lib/clienteGuardado";
 import { formatoCLP, formatoFechaLegible } from "@/lib/format";
 import { totalCarrito } from "@/lib/pricing";
 import { useUi } from "@/lib/ui";
@@ -36,6 +37,33 @@ export default function ConfirmarDrawer() {
   const [comentario, setComentario] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Si hay datos de un pedido anterior guardados en este navegador (no en
+  // el servidor), se precargan acá para que la persona no tenga que
+  // tipearlos de nuevo cada vez.
+  const [hayGuardado, setHayGuardado] = useState(false);
+
+  useEffect(() => {
+    const guardado = cargarClienteGuardado();
+    if (!guardado) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setClienteNombre(guardado.nombre);
+    setClienteTelefono(guardado.telefono);
+    setTipoEntrega(guardado.tipoEntrega);
+    if (guardado.comunaNombre) setComunaNombre(guardado.comunaNombre);
+    if (guardado.direccion) setClienteDireccion(guardado.direccion);
+    setMedioPago(guardado.medioPago);
+    setHayGuardado(true);
+  }, []);
+
+  function olvidarDatos() {
+    olvidarClienteGuardado();
+    setClienteNombre("");
+    setClienteTelefono("");
+    setComunaNombre("");
+    setClienteDireccion("");
+    setMedioPago("");
+    setHayGuardado(false);
+  }
 
   const fechaEntrega = useMemo(() => {
     if (opcionFecha === "hoy") return "Hoy";
@@ -100,6 +128,14 @@ export default function ConfirmarDrawer() {
       });
       window.open(linkWhatsapp(mensaje), "_blank");
 
+      guardarClienteGuardado({
+        nombre: clienteNombre,
+        telefono: clienteTelefono,
+        tipoEntrega,
+        medioPago,
+        ...(tipoEntrega === "despacho" ? { comunaNombre, direccion: clienteDireccion.trim() } : {}),
+      });
+
       vaciar();
       cerrarConfirmar();
     } catch (err) {
@@ -138,7 +174,19 @@ export default function ConfirmarDrawer() {
 
         <div className="mt-5 flex flex-col gap-5">
           <div className="flex flex-col gap-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-accent">Tus datos</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-accent">Tus datos</p>
+              {hayGuardado && (
+                <button type="button" onClick={olvidarDatos} className="text-xs font-medium text-muted underline">
+                  Olvidar mis datos
+                </button>
+              )}
+            </div>
+            {hayGuardado && (
+              <p className="-mt-2 text-xs font-normal text-muted">
+                Completamos esto con los datos de tu último pedido en este celular/computador.
+              </p>
+            )}
             <label className="flex flex-col gap-1 text-sm font-semibold text-dark">
               Nombre
               <input
