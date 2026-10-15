@@ -202,6 +202,10 @@ const REGLAS: ReglaImagen[] = [
   { categoriaNombre: "Mariscos y Pescado", palabras: ["camaron"], slug: "mar-camarones" },
   { categoriaNombre: "Mariscos y Pescado", palabras: ["merluza"], slug: "mar-merluza" },
 
+  // --- Quesos ---
+  { categoriaNombre: "Quesos", palabras: ["mantecoso", "premium"], slug: "que-mantecoso-premium" },
+  { categoriaNombre: "Quesos", palabras: ["mozzarella"], slug: "que-mozzarella" },
+
   // --- Combos ---
   // Fotos promocionales (con precio/ingredientes escritos en la imagen, a
   // pedido del usuario) — una por combo, matcheadas por una palabra bien
