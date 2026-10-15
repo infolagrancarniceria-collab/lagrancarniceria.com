@@ -201,6 +201,7 @@ const REGLAS: ReglaImagen[] = [
   // --- Mariscos y Pescado ---
   { categoriaNombre: "Mariscos y Pescado", palabras: ["camaron"], slug: "mar-camarones" },
   { categoriaNombre: "Mariscos y Pescado", palabras: ["merluza"], slug: "mar-merluza" },
+  { categoriaNombre: "Mariscos y Pescado", palabras: ["salmon", "industrial"], slug: "mar-salmon-industrial" },
 
   // --- Quesos ---
   { categoriaNombre: "Quesos", palabras: ["mantecoso", "premium"], slug: "que-mantecoso-premium" },
