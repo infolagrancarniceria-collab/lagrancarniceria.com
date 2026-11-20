@@ -2,11 +2,14 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import type { ComunaPublica, CorteOpcionPublica, ProductoPublico } from "./types";
+import type { EtiquetaPublica } from "./etiquetado/datos";
 
 interface CatalogoDataValue {
   productos: ProductoPublico[];
   comunas: ComunaPublica[];
   cortes: CorteOpcionPublica[];
+  // Información nutricional por producto (solo los publicados desde /etiquetado).
+  etiquetas: EtiquetaPublica[];
 }
 
 const CatalogoDataContext = createContext<CatalogoDataValue | null>(null);
