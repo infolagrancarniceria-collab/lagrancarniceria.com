@@ -41,9 +41,36 @@ WhatsApp) — no hay páginas separadas de precios/carrito, todo vive en `/`.
   (ver `SYNC_API_KEY` en `.env.example`).
 - `src/app/api/pedidos/` — ruta pública que usa el sitio para crear un
   pedido (retiro en tienda o despacho a domicilio; cotización, no pago).
+- `src/app/(admin)/etiquetado/` — módulo interno de etiquetado nutricional
+  de productos artesanales (ver sección abajo). El sitio público vive en
+  `src/app/(sitio)/`; son dos root layouts separados (route groups).
 - `legacy-claude-design/` — diseño anterior hecho con Claude Design
   (export estático de un solo archivo), guardado como referencia de marca
   y contenido — ya no es el código que corre en producción. El logo real
   del negocio (`public/logo.webp`) se rescató de ahí; el resto de las
   imágenes de ese archivo (fotos por producto) parecen ser de un catálogo
   de proveedor/supermercado, no fotos propias — no se usan en el sitio.
+
+## Etiquetado nutricional (`/etiquetado`)
+
+Herramienta interna (no enlazada ni indexada) para calcular la tabla
+nutricional y los sellos "ALTO EN" de los productos artesanales, siguiendo el
+*Manual de Etiquetado Nutricional de Alimentos* del MINSAL (2017):
+
+- **Ingredientes** con su composición por 100 g. Vienen precargados desde
+  USDA FoodData Central (SR Legacy) y son editables. Cada uno indica si
+  "adiciona" sodio, azúcares o grasas (Anexo 2 del manual): sin adición no
+  corresponde sello aunque se supere el límite.
+- **Productos**: receta en "kg de base + cantidades por kg", merma típica,
+  porción y datos del rótulo. Muestra una vista previa en vivo de la tabla, los
+  sellos y el porqué de cada uno.
+- **Lotes**: peso antes y después de la cocción, el ahumado o el secado. La
+  etiqueta de un lote usa su merma real; la web usa la del último lote.
+- **Etiqueta**: cara principal (con los sellos al tamaño que corresponde según
+  el área, pág. 30) y cara de información, impresas a tamaño real desde el
+  navegador (Imprimir → Guardar como PDF).
+- **Web**: si el producto se vincula a un producto del catálogo y se marca
+  "Mostrar en la web", la ficha del cotizador muestra la información nutricional.
+
+Acceso con una sola clave: variable de entorno `ETIQUETADO_CLAVE`. La lógica
+del cálculo está en `src/lib/etiquetado/calculo.ts`.

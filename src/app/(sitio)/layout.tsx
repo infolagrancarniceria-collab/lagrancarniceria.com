@@ -4,13 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { aProductoPublico, type ComunaPublica, type CorteOpcionPublica, type ProductoPublico } from "@/lib/types";
 import { NEGOCIO_DIRECCION, NEGOCIO_INSTAGRAM, NEGOCIO_NOMBRE, NEGOCIO_TELEFONO, SITIO_URL } from "@/lib/negocio";
 import Providers from "@/components/Providers";
+import { etiquetasPublicas, type EtiquetaPublica } from "@/lib/etiquetado/datos";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BotonWhatsappFlotante from "@/components/BotonWhatsappFlotante";
 import CotizadorModal from "@/components/CotizadorModal";
 import CarritoDrawer from "@/components/CarritoDrawer";
 import ConfirmarDrawer from "@/components/ConfirmarDrawer";
-import "./globals.css";
+import "../globals.css";
 
 const abrilFatface = Abril_Fatface({
   variable: "--font-abril-fatface",
@@ -88,6 +89,7 @@ async function obtenerDatosCatalogo(): Promise<{
   productos: ProductoPublico[];
   comunas: ComunaPublica[];
   cortes: CorteOpcionPublica[];
+  etiquetas: EtiquetaPublica[];
 }> {
   try {
     const [productos, comunas, cortes] = await Promise.all([
@@ -95,21 +97,27 @@ async function obtenerDatosCatalogo(): Promise<{
       prisma.comuna.findMany({ orderBy: { costoEnvio: "asc" } }),
       prisma.corteOpcion.findMany({ orderBy: { orden: "asc" } }),
     ]);
-    return { productos: productos.map(aProductoPublico), comunas, cortes };
+    // Información nutricional de productos artesanales (módulo /etiquetado)
+    // — si falla, el catálogo igual se muestra, solo sin las tablas.
+    const etiquetas = await etiquetasPublicas().catch((err) => {
+      console.error("[layout] no se pudieron calcular las etiquetas nutricionales:", err);
+      return [];
+    });
+    return { productos: productos.map(aProductoPublico), comunas, cortes, etiquetas };
   } catch (err) {
     console.error("[layout] no se pudo consultar la base de datos:", err);
-    return { productos: [], comunas: [], cortes: [] };
+    return { productos: [], comunas: [], cortes: [], etiquetas: [] };
   }
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const { productos, comunas, cortes } = await obtenerDatosCatalogo();
+  const { productos, comunas, cortes, etiquetas } = await obtenerDatosCatalogo();
 
   return (
     <html lang="es" className={`${abrilFatface.variable} ${asar.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background font-sans text-text">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdNegocio) }} />
-        <Providers productos={productos} comunas={comunas} cortes={cortes}>
+        <Providers productos={productos} comunas={comunas} cortes={cortes} etiquetas={etiquetas}>
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />

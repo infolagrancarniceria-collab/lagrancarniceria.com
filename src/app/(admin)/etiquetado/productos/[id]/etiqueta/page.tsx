@@ -1,0 +1,277 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { requerirSesion } from "@/lib/etiquetado/auth";
+import { alergenosDe, formatoEntero, porcionesPorEnvase, tamanoSelloCm, textoIngredientes } from "@/lib/etiquetado/calculo";
+import { calcularProducto, fechaVencimientoLote, formatoFecha, mapaIngredientes, mermaDeLote } from "@/lib/etiquetado/datos";
+import TablaNutricional from "@/components/etiquetado/TablaNutricional";
+import SelloAltoEn from "@/components/etiquetado/SelloAltoEn";
+import BotonImprimir from "./BotonImprimir";
+
+function numero(v: string | string[] | undefined): number | null {
+  if (typeof v !== "string" || v.trim() === "") return null;
+  const t = v.trim();
+  const x = Number(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
+  return Number.isFinite(x) && x > 0 ? x : null;
+}
+
+const input = "rounded-lg border border-card-border bg-white px-3 py-2";
+
+export default async function EtiquetaPage({ params, searchParams }: PageProps<"/etiquetado/productos/[id]/etiqueta">) {
+  await requerirSesion();
+  const { id } = await params;
+  const sp = await searchParams;
+
+  const [producto, ingredientes, rotulo] = await Promise.all([
+    prisma.productoArtesanal.findUnique({
+      where: { id: Number(id) || 0 },
+      include: { items: true, lotes: { orderBy: { fechaElaboracion: "desc" } } },
+    }),
+    mapaIngredientes(),
+    prisma.datosRotulo.findUnique({ where: { id: 1 } }),
+  ]);
+  if (!producto) notFound();
+
+  const loteId = Number(sp.lote) || null;
+  const lote = loteId ? producto.lotes.find((l) => l.id === loteId) ?? null : null;
+  const merma = lote ? mermaDeLote(lote) : producto.mermaPct;
+  const r = calcularProducto(producto, ingredientes, merma);
+
+  const ancho = numero(sp.ancho) ?? producto.etiquetaAnchoCm;
+  const alto = numero(sp.alto) ?? producto.etiquetaAltoCm;
+  const netoG = numero(sp.neto);
+  const area = ancho && alto ? ancho * alto : null;
+  const selloCm = area ? tamanoSelloCm(area) : null;
+  const sellos = r.sellosQueCorresponden;
+
+  const hoy = new Date().toISOString().slice(0, 10);
+  const elabTexto = typeof sp.elab === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.elab) ? sp.elab : hoy;
+  const fechaElab = lote ? lote.fechaElaboracion : new Date(`${elabTexto}T00:00:00Z`);
+  const fechaVenc = lote
+    ? fechaVencimientoLote(lote, producto.vidaUtilDias)
+    : fechaVencimientoLote({ fechaElaboracion: fechaElab, fechaVencimiento: null }, producto.vidaUtilDias);
+  const codigoLote = lote?.codigo ?? (typeof sp.codigo === "string" && sp.codigo.trim() ? sp.codigo.trim() : null);
+
+  // Anexo 3: sellos en el cuadrante superior derecho de la cara principal.
+  // Presentación 1 = hasta 2 por fila; Presentación 2 (todos en una fila)
+  // solo si la altura del cuadrante no alcanza para la 1.
+  const sep = 0.15;
+  let columnas = Math.min(2, sellos.length);
+  let filasSellos = Math.ceil(sellos.length / 2);
+  let cabenSellos = true;
+  if (selloCm && ancho && alto && sellos.length > 0) {
+    const cabe = (c: number, f: number) => c * selloCm + (c - 1) * sep <= ancho / 2 + 0.01 && f * selloCm + (f - 1) * sep <= alto / 2 + 0.01;
+    if (!cabe(columnas, filasSellos)) {
+      if (cabe(sellos.length, 1)) {
+        columnas = sellos.length;
+        filasSellos = 1;
+      } else cabenSellos = false;
+    }
+  }
+
+  const avisos: string[] = [];
+  if (!ancho || !alto) avisos.push("Ingresa el ancho y alto de la cara principal para calcular el tamaño de los sellos.");
+  if (area != null && area < 30)
+    avisos.push("La cara principal mide menos de 30 cm²: los sellos van en el envase mayor que contenga los productos (pág. 30).");
+  if (sellos.length > 0 && selloCm && !cabenSellos)
+    avisos.push(`Los sellos de ${selloCm} cm no caben en el cuadrante superior derecho: usa una etiqueta más grande.`);
+  if (!rotulo) avisos.push("Faltan los datos del rótulo (razón social, domicilio, resolución).");
+  if (!fechaVenc) avisos.push("El producto no tiene vida útil: la fecha de vencimiento queda en blanco.");
+  if (!codigoLote) avisos.push("Sin lote: elige un lote registrado o escribe un código.");
+  if (!netoG) avisos.push("Sin peso neto: el contenido neto y las porciones por envase quedan en blanco para completarlos a mano.");
+  if (merma === 0 && !lote) avisos.push("Merma 0 %: correcto solo si el producto se vende crudo, sin cocción/ahumado/secado.");
+  avisos.push(...r.advertencias);
+
+  const porciones = netoG ? porcionesPorEnvase(netoG, producto.porcionG) : null;
+  const alergenos = alergenosDe(r.lineas);
+  const cm = (v: number) => `${v}cm`;
+  const anchoPieza = ancho ?? 10;
+  const altoPieza = alto ?? 10;
+
+  return (
+    <div>
+      <div className="no-print">
+        <Link href={`/etiquetado/productos/${producto.id}`} className="text-sm text-accent">
+          ← {producto.nombre}
+        </Link>
+        <h1 className="mt-2 text-2xl font-bold text-dark">Etiqueta — {producto.nombre}</h1>
+
+        <form method="get" className="mt-4 grid gap-3 rounded-xl border border-card-border bg-card p-4 sm:grid-cols-3 lg:grid-cols-6">
+          <label className="flex flex-col gap-1 text-sm sm:col-span-2">
+            Lote
+            <select name="lote" defaultValue={lote?.id ?? ""} className={input}>
+              <option value="">Sin lote registrado (merma típica {producto.mermaPct} %)</option>
+              {producto.lotes.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.codigo} · {formatoFecha(l.fechaElaboracion)} · merma {mermaDeLote(l).toLocaleString("es-CL", { maximumFractionDigits: 1 })} %
+                </option>
+              ))}
+            </select>
+          </label>
+          {!lote && (
+            <>
+              <label className="flex flex-col gap-1 text-sm">
+                Código de lote
+                <input name="codigo" defaultValue={codigoLote ?? ""} className={input} />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                Elaboración
+                <input name="elab" type="date" defaultValue={elabTexto} className={input} />
+              </label>
+            </>
+          )}
+          <label className="flex flex-col gap-1 text-sm">
+            Peso neto del envase (g)
+            <input name="neto" defaultValue={netoG ?? ""} inputMode="decimal" className={input} placeholder="ej. 520" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Ancho cara principal (cm)
+            <input name="ancho" defaultValue={ancho ?? ""} inputMode="decimal" className={input} />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Alto cara principal (cm)
+            <input name="alto" defaultValue={alto ?? ""} inputMode="decimal" className={input} />
+          </label>
+          <div className="flex items-end gap-3 sm:col-span-3 lg:col-span-6">
+            <button className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-background">Actualizar</button>
+            <BotonImprimir />
+            <span className="text-xs text-muted">
+              Área {area ? `${formatoEntero(area)} cm²` : "—"} · sello {selloCm ? `${selloCm} × ${selloCm} cm` : "—"} · merma{" "}
+              {merma.toLocaleString("es-CL", { maximumFractionDigits: 1 })} %
+            </span>
+          </div>
+        </form>
+
+        {avisos.length > 0 && (
+          <ul className="mt-3 list-disc rounded-xl border border-gold bg-card py-3 pl-8 pr-4 text-sm">
+            {avisos.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-3 text-xs text-muted">
+          Se imprime a tamaño real (100 %, sin &quot;ajustar a la página&quot;). Las líneas punteadas son guías de corte.
+        </p>
+      </div>
+
+      <div className="hoja-etiquetas mt-6 flex flex-wrap items-start gap-6">
+        {/* Cara principal */}
+        <div
+          className="pieza-etiqueta"
+          style={{
+            width: cm(anchoPieza),
+            height: cm(altoPieza),
+            position: "relative",
+            background: "#fff",
+            color: "#000",
+            outline: "1px dashed #999",
+            fontFamily: "Arial, Helvetica, sans-serif",
+            overflow: "hidden",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.webp" alt="" style={{ position: "absolute", left: "0.3cm", top: "0.3cm", width: `${Math.min(anchoPieza * 0.3, 3)}cm` }} />
+          {sellos.length > 0 && selloCm && (
+            <div
+              style={{
+                position: "absolute",
+                right: "0.2cm",
+                top: "0.2cm",
+                display: "grid",
+                gridTemplateColumns: `repeat(${columnas}, ${cm(selloCm)})`,
+                gap: cm(sep),
+                justifyItems: "center",
+              }}
+            >
+              {sellos.map((s) => (
+                <SelloAltoEn key={s} sello={s} tamano={cm(selloCm)} />
+              ))}
+            </div>
+          )}
+          <div
+            style={{
+              position: "absolute",
+              left: "0.3cm",
+              right: "0.3cm",
+              bottom: "0.3cm",
+              top: `${Math.max(altoPieza / 2, (selloCm ?? 0) * filasSellos + 0.4)}cm`,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-end",
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: `${Math.min(18, Math.max(10, anchoPieza * 1.6))}pt`, lineHeight: 1.1 }}>
+              {producto.nombre}
+            </div>
+            <div style={{ fontSize: "9pt", marginTop: "0.15cm" }}>
+              Contenido neto: {netoG ? `${formatoEntero(netoG)} g` : "________ g"}
+            </div>
+          </div>
+        </div>
+
+        {/* Cara de información */}
+        <div
+          className="pieza-etiqueta"
+          style={{
+            width: cm(anchoPieza),
+            minHeight: cm(altoPieza),
+            background: "#fff",
+            color: "#000",
+            outline: "1px dashed #999",
+            fontFamily: "Arial, Helvetica, sans-serif",
+            fontSize: "6.5pt",
+            lineHeight: 1.3,
+            padding: "0.25cm",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.12cm",
+          }}
+        >
+          <div style={{ fontWeight: 700, fontSize: "8pt" }}>{producto.nombre}</div>
+          <div>
+            <b>Ingredientes:</b> {textoIngredientes(r.lineas)}
+            {alergenos.length > 0 && (
+              <>
+                {" "}
+                <b>Contiene: {alergenos.join(", ")}.</b>
+              </>
+            )}
+          </div>
+          {producto.leyendaAdicional && <div style={{ fontWeight: 700 }}>{producto.leyendaAdicional}</div>}
+          <TablaNutricional
+            porcionG={producto.porcionG}
+            porcionMedidaCasera={producto.porcionMedidaCasera}
+            porcionesEnvase={porciones}
+            por100={r.por100}
+            porPorcion={r.porPorcion}
+            desglosarGrasas={r.desglosarGrasas}
+          />
+          {!porciones && <div>Porciones por envase: aprox. ____</div>}
+          <div>
+            <b>Elab.:</b> {formatoFecha(fechaElab)} &nbsp; <b>Venc.:</b> {fechaVenc ? formatoFecha(fechaVenc) : "__/__/__"} &nbsp;{" "}
+            <b>Lote:</b> {codigoLote ?? "________"}
+          </div>
+          {producto.almacenamiento && (
+            <div>
+              <b>Conservación:</b> {producto.almacenamiento}
+            </div>
+          )}
+          {producto.instruccionesUso && (
+            <div>
+              <b>Modo de uso:</b> {producto.instruccionesUso}
+            </div>
+          )}
+          <div>
+            <b>Contenido neto:</b> {netoG ? `${formatoEntero(netoG)} g` : "________ g"}
+          </div>
+          {rotulo && (
+            <div>
+              <b>Elaborado por:</b> {rotulo.razonSocial}, {rotulo.domicilio}. {rotulo.resolucionSanitaria} País de origen:{" "}
+              {rotulo.paisOrigen}.{rotulo.contacto ? ` ${rotulo.contacto}` : ""}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

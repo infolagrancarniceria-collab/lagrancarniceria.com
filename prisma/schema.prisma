@@ -124,3 +124,128 @@ model Pedido {
   entregadoAlPos   Boolean   @default(false)
   entregadoAlPosEn DateTime?
 }
+
+// ---------------------------------------------------------------------------
+// Etiquetado nutricional de productos artesanales (módulo /etiquetado,
+// protegido con ETIQUETADO_CLAVE). Independiente del catálogo sincronizado
+// desde el POS: el sync borra y recrea Producto entero, así que el vínculo
+// con la web va por idPos (estable), nunca por Producto.id.
+// Cálculos: src/lib/etiquetado/calculo.ts (Manual MINSAL 2017).
+// ---------------------------------------------------------------------------
+
+// Ingrediente con su composición por 100 g (o 100 ml × densidad) — fuente
+// por defecto USDA FoodData Central (SR Legacy), editable.
+model IngredienteNutricional {
+  id           Int     @id @default(autoincrement())
+  nombre       String  @unique
+  // Cómo aparece en el listado de ingredientes del rótulo (ej. "sal de cura
+  // (sal, nitrito de sodio)").
+  nombreRotulo String
+  fuente       String
+  notas        String?
+
+  energiaKcal  Float
+  proteinasG   Float
+  grasaTotalG  Float
+  grasaSatG    Float
+  grasaMonoG   Float
+  grasaPoliG   Float
+  grasaTransG  Float
+  colesterolMg Float
+  hcDispG      Float
+  azucaresG    Float
+  sodioMg      Float
+
+  // Anexo 2 del manual — si agregar este ingrediente cuenta como "adición"
+  // del nutriente crítico (sin adición no hay sello).
+  adicionaSodio    Boolean @default(false)
+  adicionaAzucares Boolean @default(false)
+  adicionaGrasas   Boolean @default(false)
+
+  densidadGMl Float   @default(1)
+  pesoUnidadG Float?
+  // Lista separada por comas (ej. "leche, soya") — vacío si no es alérgeno.
+  alergeno    String?
+
+  itemsReceta   RecetaItem[]
+  actualizadoEn DateTime     @updatedAt
+}
+
+model ProductoArtesanal {
+  id     Int    @id @default(autoincrement())
+  // Nombre del alimento tal como va en el rótulo.
+  nombre String @unique
+
+  // La receta se ingresa como "X kg de base" + cantidades por kg de base
+  // (o totales) — ver RecetaItem.porKgBase.
+  kgBase   Float
+  // Merma típica del proceso (%) — se usa si la etiqueta no elige un lote.
+  mermaPct Float @default(0)
+
+  porcionG            Float
+  porcionMedidaCasera String @default("1 unidad")
+
+  vidaUtilDias     Int?
+  almacenamiento   String?
+  instruccionesUso String?
+  // Texto libre extra en el rótulo (ej. "Puede contener trazas de ...").
+  leyendaAdicional String?
+
+  // Medidas de la cara principal de la etiqueta, para el tamaño del sello.
+  etiquetaAnchoCm Float?
+  etiquetaAltoCm  Float?
+
+  // Producto del catálogo web (Producto.idPos) donde publicar la tabla.
+  idPosWeb      Int?
+  publicarEnWeb Boolean @default(false)
+
+  items RecetaItem[]
+  lotes LoteProduccion[]
+
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+}
+
+model RecetaItem {
+  id            Int                    @id @default(autoincrement())
+  productoId    Int
+  producto      ProductoArtesanal      @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  ingredienteId Int
+  ingrediente   IngredienteNutricional @relation(fields: [ingredienteId], references: [id], onDelete: Restrict)
+  cantidad      Float
+  // "g" | "kg" | "ml" | "l" | "unidad"
+  unidad        String
+  porKgBase     Boolean                @default(true)
+  orden         Int                    @default(0)
+
+  @@index([productoId])
+}
+
+// Lote real producido — guarda la merma medida (peso antes/después del
+// proceso) para que la etiqueta use el valor real de ese lote.
+model LoteProduccion {
+  id               Int               @id @default(autoincrement())
+  productoId       Int
+  producto         ProductoArtesanal @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  codigo           String
+  fechaElaboracion DateTime
+  // Null = se calcula con vidaUtilDias del producto.
+  fechaVencimiento DateTime?
+  pesoAntesG       Float
+  pesoFinalG       Float
+  notas            String?
+  creadoEn         DateTime          @default(now())
+
+  @@unique([productoId, codigo])
+  @@index([productoId])
+}
+
+// Datos de rotulación general (fila única, id = 1).
+model DatosRotulo {
+  id                  Int     @id @default(1)
+  razonSocial         String
+  domicilio           String
+  resolucionSanitaria String
+  paisOrigen          String  @default("Chile")
+  contacto            String?
+}

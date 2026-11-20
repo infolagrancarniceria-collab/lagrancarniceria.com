@@ -6,6 +6,8 @@ import { useCart, type Envasado } from "@/lib/cart";
 import { formatoCLP } from "@/lib/format";
 import { useUi } from "@/lib/ui";
 import type { ProductoPublico } from "@/lib/types";
+import InfoNutricional from "@/components/InfoNutricional";
+import type { EtiquetaPublica } from "@/lib/etiquetado/datos";
 
 const PESO_MINIMO = 250;
 const PESO_PASO = 50;
@@ -25,7 +27,7 @@ function formatoKgInput(gramos: number): string {
 
 export default function CotizadorModal() {
   const { productoCotizando, cerrarCotizador } = useUi();
-  const { cortes } = useCatalogoData();
+  const { cortes, etiquetas } = useCatalogoData();
 
   if (!productoCotizando) return null;
 
@@ -33,7 +35,12 @@ export default function CotizadorModal() {
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={cerrarCotizador}>
       {/* key por idPos: remonta el formulario con estado limpio cada vez que
           se cotiza un producto distinto, en vez de resetearlo con un efecto. */}
-      <CotizadorFormulario key={productoCotizando.idPos} producto={productoCotizando} cortes={cortes} />
+      <CotizadorFormulario
+        key={productoCotizando.idPos}
+        producto={productoCotizando}
+        cortes={cortes}
+        etiqueta={etiquetas.find((e) => e.idPos === productoCotizando.idPos) ?? null}
+      />
     </div>
   );
 }
@@ -41,9 +48,11 @@ export default function CotizadorModal() {
 function CotizadorFormulario({
   producto: p,
   cortes,
+  etiqueta,
 }: {
   producto: ProductoPublico;
   cortes: ReturnType<typeof useCatalogoData>["cortes"];
+  etiqueta: EtiquetaPublica | null;
 }) {
   const { cerrarCotizador } = useUi();
   const { agregar } = useCart();
@@ -174,6 +183,8 @@ function CotizadorFormulario({
             Cerrar
           </button>
         </div>
+
+        {etiqueta && <InfoNutricional etiqueta={etiqueta} />}
 
         {esPeso ? (
           <div className="mt-5 rounded-xl p-4" style={{ background: "var(--dark)" }}>
