@@ -92,18 +92,20 @@ async function obtenerDatosCatalogo(): Promise<{
   etiquetas: EtiquetaPublica[];
 }> {
   try {
-    const [productos, comunas, cortes] = await Promise.all([
+    const [productos, comunas, cortes, fotos] = await Promise.all([
       prisma.producto.findMany({ orderBy: { descripcion: "asc" } }),
       prisma.comuna.findMany({ orderBy: { costoEnvio: "asc" } }),
       prisma.corteOpcion.findMany({ orderBy: { orden: "asc" } }),
+      prisma.fotoProducto.findMany(),
     ]);
+    const fotoPorIdPos = new Map(fotos.map((f) => [f.idPos, f.url]));
     // Información nutricional de productos artesanales (módulo /etiquetado)
     // — si falla, el catálogo igual se muestra, solo sin las tablas.
     const etiquetas = await etiquetasPublicas().catch((err) => {
       console.error("[layout] no se pudieron calcular las etiquetas nutricionales:", err);
       return [];
     });
-    return { productos: productos.map(aProductoPublico), comunas, cortes, etiquetas };
+    return { productos: productos.map((p) => aProductoPublico(p, fotoPorIdPos.get(p.idPos) ?? null)), comunas, cortes, etiquetas };
   } catch (err) {
     console.error("[layout] no se pudo consultar la base de datos:", err);
     return { productos: [], comunas: [], cortes: [], etiquetas: [] };

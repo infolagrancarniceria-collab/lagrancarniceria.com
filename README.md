@@ -74,3 +74,13 @@ nutricional y los sellos "ALTO EN" de los productos artesanales, siguiendo el
 
 Acceso con una sola clave: variable de entorno `ETIQUETADO_CLAVE`. La lógica
 del cálculo está en `src/lib/etiquetado/calculo.ts`.
+
+## Fotos de productos (`/etiquetado/fotos`)
+
+Desde el mismo panel interno (misma clave) se sube, cambia o quita la foto
+de cualquier producto del catálogo. El navegador la achica (lado mayor
+1000 px) y la convierte a WebP antes de subirla. Se guarda en **Vercel
+Blob** (variable `BLOB_READ_WRITE_TOKEN`, la crea Vercel al conectar el
+store) y queda asociada por `idPos` en la tabla `FotoProducto`. Una foto
+subida reemplaza a la asignada por reglas en `src/lib/imagenesProductos.ts`
+y se ve en la web sin redeploy.

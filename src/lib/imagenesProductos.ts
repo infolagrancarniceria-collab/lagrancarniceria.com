@@ -247,7 +247,16 @@ function categoriaCoincide(categoriaRegla: string, categoriaProducto: string): b
 // 2.5kg" con marca "Fundosorno" — la marca queda en su propio campo, no
 // repetida en la descripción, así que una regla que solo mirara la
 // descripción nunca la habría encontrado).
-export function imagenProducto(producto: { descripcion: string; categoriaNombre: string; marca?: string | null }): string | null {
+//
+// Una foto subida desde /etiquetado/fotos (fotoUrl) siempre gana sobre las
+// reglas.
+export function imagenProducto(producto: {
+  descripcion: string;
+  categoriaNombre: string;
+  marca?: string | null;
+  fotoUrl?: string | null;
+}): string | null {
+  if (producto.fotoUrl) return producto.fotoUrl;
   const textoNormalizado = normalizar(`${producto.descripcion} ${producto.marca ?? ""}`);
   const regla = REGLAS.find(
     ({ categoriaNombre, palabras }) =>

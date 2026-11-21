@@ -31,7 +31,7 @@ export function construirJsonLdProductos(productos: ProductoPublico[]) {
           sku: p.plu,
           category: p.categoriaNombre,
           brand: { "@type": "Brand", name: p.marca ?? NEGOCIO_NOMBRE },
-          ...(foto ? { image: `${SITIO_URL}${foto}` } : {}),
+          ...(foto ? { image: foto.startsWith("http") ? foto : `${SITIO_URL}${foto}` } : {}),
           offers: {
             "@type": "Offer",
             url: `${SITIO_URL}/#catalogo`,

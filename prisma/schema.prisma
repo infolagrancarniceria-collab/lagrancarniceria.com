@@ -249,3 +249,13 @@ model DatosRotulo {
   paisOrigen          String  @default("Chile")
   contacto            String?
 }
+
+// Foto de producto subida desde /etiquetado/fotos (guardada en Vercel
+// Blob). Por idPos —no Producto.id— porque el sync del POS recrea el
+// catálogo entero. Si existe, reemplaza a la foto asignada por reglas en
+// src/lib/imagenesProductos.ts.
+model FotoProducto {
+  idPos         Int      @id
+  url           String
+  actualizadoEn DateTime @updatedAt
+}
