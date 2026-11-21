@@ -28,6 +28,9 @@ export interface ProductoPublico {
   // parrilla"), separadas por coma — solo para productos por unidad. Si
   // tiene valor, el cotizador pide una elección por cada unidad pedida.
   opcionesUnidad: string | null;
+  // Foto subida desde /etiquetado/fotos (URL de Vercel Blob) — null si no
+  // hay; en ese caso rige la foto por reglas (imagenesProductos.ts).
+  fotoUrl: string | null;
 }
 
 export interface ItemPedidoHistorial {
@@ -89,7 +92,7 @@ export function aProductoPublico(p: {
   promoGramosMinimos: number | null;
   promoEtiqueta: string | null;
   opcionesUnidad: string | null;
-}): ProductoPublico {
+}, fotoUrl: string | null = null): ProductoPublico {
   return {
     idPos: p.idPos,
     plu: p.plu,
@@ -109,5 +112,6 @@ export function aProductoPublico(p: {
     promoGramosMinimos: p.promoGramosMinimos,
     promoEtiqueta: p.promoEtiqueta,
     opcionesUnidad: p.opcionesUnidad,
+    fotoUrl,
   };
 }

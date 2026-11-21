@@ -7,7 +7,7 @@ import "../../globals.css";
 // Segundo root layout (route group "(admin)"): el módulo de etiquetado no
 // lleva el header/footer/carrito del sitio público, y no se indexa.
 export const metadata: Metadata = {
-  title: "Etiquetado nutricional — La Gran Carnicería",
+  title: "Panel interno — La Gran Carnicería",
   robots: { index: false, follow: false },
 };
 
@@ -22,11 +22,12 @@ export default async function EtiquetadoLayout({ children }: LayoutProps<"/etiqu
           <header className="no-print border-b border-card-border bg-dark text-background">
             <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 text-sm">
               <Link href="/etiquetado" className="font-bold text-gold">
-                Etiquetado nutricional
+                Panel interno
               </Link>
               <Link href="/etiquetado">Productos</Link>
               <Link href="/etiquetado/ingredientes">Ingredientes</Link>
               <Link href="/etiquetado/empresa">Datos del rótulo</Link>
+              <Link href="/etiquetado/fotos">Fotos de productos</Link>
               <form action={salir} className="ml-auto">
                 <button className="text-background/70 underline">Salir</button>
               </form>
