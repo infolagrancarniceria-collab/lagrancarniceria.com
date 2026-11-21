@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requerirSesion } from "@/lib/etiquetado/auth";
 import { imagenProducto } from "@/lib/imagenesProductos";
 import GaleriaFotos, { type ProductoFoto } from "./GaleriaFotos";
+import { blobConfigurado } from "./acciones";
 
 export default async function FotosPage() {
   await requerirSesion();
@@ -30,7 +31,7 @@ export default async function FotosPage() {
         La foto subida reemplaza a la automática y se ve en la web al instante. Se achica y convierte a WebP en tu
         dispositivo antes de subirla.
       </p>
-      {!process.env.BLOB_READ_WRITE_TOKEN && (
+      {!(await blobConfigurado()) && (
         <p className="mt-3 rounded-lg border border-offer/40 bg-card p-3 text-sm">
           Falta conectar <b>Vercel Blob</b> al proyecto (Storage → Blob). Sin eso no se pueden subir fotos.
         </p>
