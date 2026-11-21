@@ -5,6 +5,13 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requerirSesion } from "@/lib/etiquetado/auth";
 
+// Vercel conecta un Blob store con BLOB_READ_WRITE_TOKEN (token clásico) o
+// con BLOB_STORE_ID + OIDC (conexiones recientes) — @vercel/blob acepta
+// cualquiera de los dos.
+export async function blobConfigurado(): Promise<boolean> {
+  return !!(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+}
+
 export type ResultadoFoto = { ok: true; url: string | null } | { ok: false; error: string };
 
 const TIPOS = ["image/webp", "image/jpeg", "image/png"];
@@ -22,8 +29,8 @@ async function borrarBlob(url: string) {
 
 export async function subirFoto(fd: FormData): Promise<ResultadoFoto> {
   await requerirSesion();
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return { ok: false, error: "Falta conectar Vercel Blob al proyecto (variable BLOB_READ_WRITE_TOKEN)." };
+  if (!(await blobConfigurado())) {
+    return { ok: false, error: "Falta conectar Vercel Blob al proyecto (Storage → Blob) y redesplegar." };
   }
   const idPos = Number(fd.get("idPos"));
   const archivo = fd.get("foto");
@@ -35,13 +42,20 @@ export async function subirFoto(fd: FormData): Promise<ResultadoFoto> {
   if (!producto) return { ok: false, error: "El producto ya no existe en el catálogo" };
 
   const extension = archivo.type.split("/")[1].replace("jpeg", "jpg");
-  const blob = await put(`productos/${idPos}-${Date.now()}.${extension}`, archivo, {
-    access: "public",
-    contentType: archivo.type,
-    // La URL cambia con cada subida (timestamp), así que se puede cachear
-    // por mucho tiempo sin riesgo de mostrar una foto vieja.
-    cacheControlMaxAge: 60 * 60 * 24 * 365,
-  });
+  let blob: Awaited<ReturnType<typeof put>>;
+  try {
+    blob = await put(`productos/${idPos}-${Date.now()}.${extension}`, archivo, {
+      access: "public",
+      contentType: archivo.type,
+      // La URL cambia con cada subida (timestamp), así que se puede cachear
+      // por mucho tiempo sin riesgo de mostrar una foto vieja.
+      cacheControlMaxAge: 60 * 60 * 24 * 365,
+    });
+  } catch (err) {
+    console.error("[fotos] error al subir a Vercel Blob:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: `Vercel Blob rechazó la subida: ${msg}` };
+  }
 
   const anterior = await prisma.fotoProducto.findUnique({ where: { idPos } });
   await prisma.fotoProducto.upsert({
