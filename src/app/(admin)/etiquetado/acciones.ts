@@ -110,12 +110,14 @@ const itemSchema = z.object({
   cantidad: z.number().finite().positive("Las cantidades deben ser mayores a 0"),
   unidad: z.enum(["g", "kg", "ml", "l", "unidad"]),
   porKgBase: z.boolean(),
+  enSalmuera: z.boolean().default(false),
 });
 
 const productoSchema = z.object({
   nombre: texto.min(1, "Falta el nombre del producto"),
   kgBase: num.pipe(z.number().positive("Los kg de base deben ser mayores a 0")),
   mermaPct: num.pipe(z.number().min(0).max(90, "La merma no puede superar 90 %")),
+  salmueraAbsorbidaPct: numOpcional,
   porcionG: num.pipe(z.number().positive("La porción debe ser mayor a 0")),
   porcionMedidaCasera: texto.min(1, "Falta la porción en medida casera (ej. 1 unidad)"),
   vidaUtilDias: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().int().positive().nullable()),
