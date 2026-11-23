@@ -44,6 +44,7 @@ export function aItemReceta(i: RecetaItem): ItemReceta {
     cantidad: i.cantidad,
     unidad: (UNIDADES as string[]).includes(i.unidad) ? (i.unidad as UnidadCantidad) : "g",
     porKgBase: i.porKgBase,
+    enSalmuera: i.enSalmuera,
   };
 }
 
@@ -88,7 +89,13 @@ export function calcularProducto(
   mermaPct: number = p.mermaPct
 ): ResultadoCalculo {
   return calcular(
-    { kgBase: p.kgBase, mermaPct, porcionG: p.porcionG, items: [...p.items].sort((a, b) => a.orden - b.orden).map(aItemReceta) },
+    {
+      kgBase: p.kgBase,
+      mermaPct,
+      porcionG: p.porcionG,
+      salmueraAbsorbidaPct: p.salmueraAbsorbidaPct,
+      items: [...p.items].sort((a, b) => a.orden - b.orden).map(aItemReceta),
+    },
     ingredientes
   );
 }

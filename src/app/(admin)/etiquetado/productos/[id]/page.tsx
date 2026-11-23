@@ -48,6 +48,7 @@ export default async function ProductoPage({ params }: PageProps<"/etiquetado/pr
                 nombre: producto.nombre,
                 kgBase: producto.kgBase,
                 mermaPct: producto.mermaPct,
+                salmueraAbsorbidaPct: producto.salmueraAbsorbidaPct,
                 porcionG: producto.porcionG,
                 porcionMedidaCasera: producto.porcionMedidaCasera,
                 vidaUtilDias: producto.vidaUtilDias,

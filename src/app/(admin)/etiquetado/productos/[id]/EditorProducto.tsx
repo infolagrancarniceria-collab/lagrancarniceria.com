@@ -24,6 +24,7 @@ export interface ProductoEditable {
   nombre: string;
   kgBase: number;
   mermaPct: number;
+  salmueraAbsorbidaPct: number | null;
   porcionG: number;
   porcionMedidaCasera: string;
   vidaUtilDias: number | null;
@@ -43,7 +44,14 @@ function n(s: string): number {
   return Number(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
 }
 
-type Fila = { clave: number; ingredienteId: number; cantidad: string; unidad: UnidadCantidad; porKgBase: boolean };
+type Fila = {
+  clave: number;
+  ingredienteId: number;
+  cantidad: string;
+  unidad: UnidadCantidad;
+  porKgBase: boolean;
+  enSalmuera: boolean;
+};
 
 let siguienteClave = 1;
 
@@ -69,16 +77,36 @@ export default function EditorProducto({
       cantidad: String(it.cantidad).replace(".", ","),
       unidad: it.unidad,
       porKgBase: it.porKgBase,
+      enSalmuera: !!it.enSalmuera,
     }))
+  );
+  const [salmueraPct, setSalmueraPct] = useState(
+    p?.salmueraAbsorbidaPct == null ? "" : String(p.salmueraAbsorbidaPct).replace(".", ",")
   );
 
   const items: ItemReceta[] = filas
     .filter((f) => f.ingredienteId > 0 && n(f.cantidad) > 0)
-    .map((f) => ({ ingredienteId: f.ingredienteId, cantidad: n(f.cantidad), unidad: f.unidad, porKgBase: f.porKgBase }));
+    .map((f) => ({
+      ingredienteId: f.ingredienteId,
+      cantidad: n(f.cantidad),
+      unidad: f.unidad,
+      porKgBase: f.porKgBase,
+      enSalmuera: f.enSalmuera,
+    }));
+  const haySalmuera = filas.some((f) => f.enSalmuera);
 
   const kg = n(kgBase) || 0;
   // Cálculo barato (decenas de ingredientes): se rehace en cada render.
-  const r = calcular({ kgBase: kg, mermaPct: n(merma) || 0, porcionG: n(porcion) || 0, items }, mapa);
+  const r = calcular(
+    {
+      kgBase: kg,
+      mermaPct: n(merma) || 0,
+      porcionG: n(porcion) || 0,
+      salmueraAbsorbidaPct: salmueraPct.trim() === "" ? null : n(salmueraPct) || 0,
+      items,
+    },
+    mapa
+  );
 
   const cambiar = (clave: number, cambio: Partial<Fila>) =>
     setFilas((fs) => fs.map((f) => (f.clave === clave ? { ...f, ...cambio } : f)));
@@ -193,12 +221,20 @@ export default function EditorProducto({
                       </option>
                     ))}
                   </select>
-                  <label className="flex items-center gap-1 text-xs">
-                    <input type="checkbox" checked={f.porKgBase} onChange={(e) => cambiar(f.clave, { porKgBase: e.target.checked })} />
-                    por kg de base
-                  </label>
+                  <div className="flex flex-col justify-center gap-0.5 text-xs">
+                    <label className="flex items-center gap-1">
+                      <input type="checkbox" checked={f.porKgBase} onChange={(e) => cambiar(f.clave, { porKgBase: e.target.checked })} />
+                      por kg de base
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <input type="checkbox" checked={f.enSalmuera} onChange={(e) => cambiar(f.clave, { enSalmuera: e.target.checked })} />
+                      en salmuera
+                    </label>
+                  </div>
                   <div className="flex items-center justify-end gap-1 text-xs">
-                    <span className="tabular mr-2 text-muted">{g == null ? "" : `${formatoEntero(g)} g`}</span>
+                    <span className="tabular mr-2 text-muted">
+                      {g == null ? "" : f.enSalmuera ? `${formatoEntero(g)} g en salmuera` : `${formatoEntero(g)} g`}
+                    </span>
                     <button type="button" onClick={() => mover(i, -1)} className="px-1" aria-label="Subir">
                       ↑
                     </button>
@@ -218,9 +254,38 @@ export default function EditorProducto({
               );
             })}
           </div>
+          <div className="mt-4 rounded-lg border border-card-border p-3">
+            <label className="flex max-w-xs flex-col gap-1 text-sm">
+              Salmuera absorbida (% del peso de la base)
+              <input
+                name="salmueraAbsorbidaPct"
+                value={salmueraPct}
+                onChange={(e) => setSalmueraPct(e.target.value)}
+                inputMode="decimal"
+                className={input}
+                placeholder="vacío si no lleva salmuera"
+              />
+            </label>
+            <p className="mt-1 text-xs text-muted">
+              Para jamones y piezas curadas en salmuera: marca &quot;en salmuera&quot; en sus ingredientes (ej. 1000 ml de agua + 55 g de
+              sal = la composición de la salmuera) e indica qué % del peso de la carne quedó dentro: lo inyectado más lo que ganó al
+              sumergirla. Se mide pesando la pieza antes de inyectar y después de sacarla de la salmuera (escurrida). Solo entra al
+              producto esa parte de la salmuera, no toda la preparada.
+            </p>
+            {haySalmuera && r.salmuera && (
+              <p className="tabular mt-1 text-xs text-dark">
+                Salmuera preparada: {formatoEntero(r.salmuera.preparadaG)} g → absorbida: {formatoEntero(r.salmuera.absorbidaG)} g
+              </p>
+            )}
+          </div>
           <button
             type="button"
-            onClick={() => setFilas((fs) => [...fs, { clave: siguienteClave++, ingredienteId: 0, cantidad: "", unidad: "g", porKgBase: true }])}
+            onClick={() =>
+              setFilas((fs) => [
+                ...fs,
+                { clave: siguienteClave++, ingredienteId: 0, cantidad: "", unidad: "g", porKgBase: true, enSalmuera: false },
+              ])
+            }
             className="mt-3 rounded-lg border border-accent px-3 py-1.5 text-sm font-semibold text-accent"
           >
             + Agregar ingrediente

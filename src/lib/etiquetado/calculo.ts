@@ -60,6 +60,9 @@ export interface ItemReceta {
   // true = la cantidad es "por cada kg de base" (ej. sal 16 g/kg de carne) y
   // se multiplica por kgBase; false = cantidad total del lote.
   porKgBase: boolean;
+  // true = ingrediente de la salmuera (inyección/inmersión): no entra
+  // completo, solo la fracción absorbida (ver Receta.salmueraAbsorbidaPct).
+  enSalmuera?: boolean;
 }
 
 export interface Receta {
@@ -70,6 +73,13 @@ export interface Receta {
   // pérdida de agua; lo que cambia es el peso final por el que se divide.
   mermaPct: number;
   porcionG: number;
+  // Salmuera que queda en la carne, en % del peso de la base (ej. 10 =
+  // 100 g de salmuera por kg de carne: lo inyectado más lo que gana al
+  // sumergirla, medido por diferencia de peso). Los ingredientes con
+  // enSalmuera definen solo la COMPOSICIÓN de la salmuera (ej. 1000 ml de
+  // agua + 55 g de sal); lo que entra al producto es esa composición
+  // escalada a los gramos absorbidos.
+  salmueraAbsorbidaPct?: number | null;
 }
 
 // Límites del RSA para sólidos (Imagen N°11, pág. 28 — vigentes desde el
@@ -124,6 +134,8 @@ export interface ResultadoCalculo {
   sellosQueCorresponden: Sello[];
   ingredientesFaltantes: number[];
   advertencias: string[];
+  // Gramos de salmuera preparada (según la receta) y absorbida por el lote.
+  salmuera: { preparadaG: number; absorbidaG: number } | null;
 }
 
 function vacio(): NutrientesPor100 {
@@ -177,6 +189,24 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
   const lineas: LineaIngredienteCalculada[] = [];
   const totales = vacio();
 
+  // Salmuera: la receta define su composición; al producto entra solo lo
+  // absorbido (salmueraAbsorbidaPct del peso de la base), repartido según
+  // esa composición.
+  const itemsSalmuera = receta.items.filter((i) => i.enSalmuera);
+  let factorSalmuera = 0;
+  let salmuera: ResultadoCalculo["salmuera"] = null;
+  if (itemsSalmuera.length > 0) {
+    const preparadaG = itemsSalmuera.reduce((s, it) => {
+      const ing = ingredientes.get(it.ingredienteId);
+      return ing ? s + gramosItem(it, ing, receta.kgBase) : s;
+    }, 0);
+    const pct = Math.max(receta.salmueraAbsorbidaPct ?? 0, 0);
+    const absorbidaG = (receta.kgBase * 1000 * pct) / 100;
+    factorSalmuera = preparadaG > 0 ? absorbidaG / preparadaG : 0;
+    salmuera = { preparadaG, absorbidaG };
+    if (pct === 0) advertencias.push("Hay ingredientes de salmuera pero la salmuera absorbida es 0 %: no aportan nada.");
+  }
+
   for (const item of receta.items) {
     const ing = ingredientes.get(item.ingredienteId);
     if (!ing) {
@@ -186,7 +216,7 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
     if (item.unidad === "unidad" && !ing.pesoUnidadG) {
       advertencias.push(`"${ing.nombre}" se mide en unidades pero no tiene peso por unidad — cuenta como 0 g.`);
     }
-    const g = gramosItem(item, ing, receta.kgBase);
+    const g = gramosItem(item, ing, receta.kgBase) * (item.enSalmuera ? factorSalmuera : 1);
     // Paso 5: regla de tres — aporte = g × valor/100.
     for (const k of CLAVES_NUTRIENTES) totales[k] += (g * ing[k]) / 100;
     const existente = lineas.find((l) => l.ingredienteId === ing.id);
@@ -251,6 +281,7 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
     sellosQueCorresponden: sellos.filter((s) => s.corresponde).map((s) => s.sello),
     ingredientesFaltantes: faltantes,
     advertencias,
+    salmuera,
   };
 }
 

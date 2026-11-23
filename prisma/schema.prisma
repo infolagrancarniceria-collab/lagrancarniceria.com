@@ -181,6 +181,9 @@ model ProductoArtesanal {
   kgBase   Float
   // Merma típica del proceso (%) — se usa si la etiqueta no elige un lote.
   mermaPct Float @default(0)
+  // Salmuera que queda en la carne (% del peso de la base): inyectado +
+  // ganancia por inmersión. Null si el producto no lleva salmuera.
+  salmueraAbsorbidaPct Float?
 
   porcionG            Float
   porcionMedidaCasera String @default("1 unidad")
@@ -216,6 +219,9 @@ model RecetaItem {
   // "g" | "kg" | "ml" | "l" | "unidad"
   unidad        String
   porKgBase     Boolean                @default(true)
+  // Ingrediente de la salmuera: define su composición; al producto entra
+  // solo lo absorbido (ProductoArtesanal.salmueraAbsorbidaPct).
+  enSalmuera    Boolean                @default(false)
   orden         Int                    @default(0)
 
   @@index([productoId])
