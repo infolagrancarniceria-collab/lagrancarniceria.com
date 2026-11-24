@@ -198,6 +198,15 @@ model ProductoArtesanal {
   etiquetaAnchoCm Float?
   etiquetaAltoCm  Float?
 
+  // Diseño propio de la cara principal (imagen hecha en Canva, guardada en
+  // Vercel Blob). Si existe, la etiqueta lo usa de fondo y encima pone los
+  // sellos (cuadrante superior derecho) y los campos variables.
+  disenoFrontalUrl String?
+  // JSON con la posición de cada campo variable sobre el diseño, en % del
+  // ancho/alto: {"neto":{"x":16,"y":94},"elab":…,"venc":…,"lote":…}. Cada
+  // punto es el inicio del texto, apoyado sobre la línea.
+  disenoCampos     String?
+
   // Producto del catálogo web (Producto.idPos) donde publicar la tabla.
   idPosWeb      Int?
   publicarEnWeb Boolean @default(false)

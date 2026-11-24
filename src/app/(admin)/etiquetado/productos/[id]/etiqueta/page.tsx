@@ -7,6 +7,7 @@ import { calcularProducto, fechaVencimientoLote, formatoFecha, mapaIngredientes,
 import TablaNutricional from "@/components/etiquetado/TablaNutricional";
 import SelloAltoEn from "@/components/etiquetado/SelloAltoEn";
 import BotonImprimir from "./BotonImprimir";
+import { CAMPOS_DISENO, leerPosiciones, type CampoDiseno } from "@/lib/etiquetado/diseno";
 
 function numero(v: string | string[] | undefined): number | null {
   if (typeof v !== "string" || v.trim() === "") return null;
@@ -80,9 +81,19 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
   if (!codigoLote) avisos.push("Sin lote: elige un lote registrado o escribe un código.");
   if (!netoG) avisos.push("Sin peso neto: el contenido neto y las porciones por envase quedan en blanco para completarlos a mano.");
   if (merma === 0 && !lote) avisos.push("Merma 0 %: correcto solo si el producto se vende crudo, sin cocción/ahumado/secado.");
+  if (producto.disenoFrontalUrl && !leerPosiciones(producto.disenoCampos).neto)
+    avisos.push("El diseño no tiene ubicado el peso neto: en el frente queda la línea en blanco (igual va en la cara de información).");
   avisos.push(...r.advertencias);
 
   const porciones = netoG ? porcionesPorEnvase(netoG, producto.porcionG) : null;
+  const diseno = producto.disenoFrontalUrl;
+  const posiciones = leerPosiciones(producto.disenoCampos);
+  const valoresCampos: Partial<Record<CampoDiseno, string>> = {
+    neto: netoG ? formatoEntero(netoG) : "",
+    elab: formatoFecha(fechaElab),
+    venc: fechaVenc ? formatoFecha(fechaVenc) : "",
+    lote: codigoLote ?? "",
+  };
   const alergenos = alergenosDe(r.lineas);
   const cm = (v: number) => `${v}cm`;
   const anchoPieza = ancho ?? 10;
@@ -169,8 +180,14 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
             overflow: "hidden",
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.webp" alt="" style={{ position: "absolute", left: "0.3cm", top: "0.3cm", width: `${Math.min(anchoPieza * 0.3, 3)}cm` }} />
+          {diseno ? (
+            // Diseño propio (Canva) de fondo, a tamaño exacto de la pieza.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={diseno} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src="/logo.webp" alt="" style={{ position: "absolute", left: "0.3cm", top: "0.3cm", width: `${Math.min(anchoPieza * 0.3, 3)}cm` }} />
+          )}
           {sellos.length > 0 && selloCm && (
             <div
               style={{
@@ -188,25 +205,52 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
               ))}
             </div>
           )}
-          <div
-            style={{
-              position: "absolute",
-              left: "0.3cm",
-              right: "0.3cm",
-              bottom: "0.3cm",
-              top: `${Math.max(altoPieza / 2, (selloCm ?? 0) * filasSellos + 0.4)}cm`,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-            }}
-          >
-            <div style={{ fontWeight: 700, fontSize: `${Math.min(18, Math.max(10, anchoPieza * 1.6))}pt`, lineHeight: 1.1 }}>
-              {producto.nombre}
+          {diseno ? (
+            CAMPOS_DISENO.map(({ clave }) => {
+              const p = posiciones[clave];
+              if (!p) return null;
+              return (
+                <span
+                  key={clave}
+                  style={{
+                    position: "absolute",
+                    left: `${p.x}%`,
+                    top: `${p.y}%`,
+                    transform: "translateY(-100%)",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    fontSize: `${Math.max(7, Math.min(11, altoPieza * 1.05))}pt`,
+                    fontWeight: 700,
+                    color: "#2b2420",
+                    whiteSpace: "nowrap",
+                    lineHeight: 1,
+                    paddingBottom: "0.04cm",
+                  }}
+                >
+                  {valoresCampos[clave] ?? ""}
+                </span>
+              );
+            })
+          ) : (
+            <div
+              style={{
+                position: "absolute",
+                left: "0.3cm",
+                right: "0.3cm",
+                bottom: "0.3cm",
+                top: `${Math.max(altoPieza / 2, (selloCm ?? 0) * filasSellos + 0.4)}cm`,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: `${Math.min(18, Math.max(10, anchoPieza * 1.6))}pt`, lineHeight: 1.1 }}>
+                {producto.nombre}
+              </div>
+              <div style={{ fontSize: "9pt", marginTop: "0.15cm" }}>
+                Contenido neto: {netoG ? `${formatoEntero(netoG)} g` : "________ g"}
+              </div>
             </div>
-            <div style={{ fontSize: "9pt", marginTop: "0.15cm" }}>
-              Contenido neto: {netoG ? `${formatoEntero(netoG)} g` : "________ g"}
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Cara de información */}

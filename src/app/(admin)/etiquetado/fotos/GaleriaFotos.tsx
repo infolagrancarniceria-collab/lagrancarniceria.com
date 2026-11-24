@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { optimizarImagen } from "@/lib/imagen";
 import { quitarFoto, subirFoto } from "./acciones";
 
 export interface ProductoFoto {
@@ -16,30 +17,6 @@ type Filtro = "todos" | "sin-foto" | "subidas";
 // Lado mayor máximo de la foto — las tarjetas de la web la muestran a
 // ~300 px de ancho, 1000 px deja margen para pantallas de alta densidad.
 const LADO_MAX = 1000;
-
-// Achica la foto en el navegador (sin recortar) y la convierte a WebP; si el
-// navegador no sabe codificar WebP (algunos Safari antiguos), usa JPEG.
-async function optimizar(archivo: File): Promise<File> {
-  const bitmap = await createImageBitmap(archivo, { imageOrientation: "from-image" });
-  const escala = Math.min(1, LADO_MAX / Math.max(bitmap.width, bitmap.height));
-  const ancho = Math.round(bitmap.width * escala);
-  const alto = Math.round(bitmap.height * escala);
-  const canvas = document.createElement("canvas");
-  canvas.width = ancho;
-  canvas.height = alto;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("El navegador no pudo procesar la imagen");
-  ctx.drawImage(bitmap, 0, 0, ancho, alto);
-  bitmap.close();
-
-  const codificar = (tipo: string) =>
-    new Promise<Blob | null>((resolver) => canvas.toBlob(resolver, tipo, 0.85));
-  let blob = await codificar("image/webp");
-  if (!blob || blob.type !== "image/webp") blob = await codificar("image/jpeg");
-  if (!blob) throw new Error("El navegador no pudo convertir la imagen");
-  const ext = blob.type === "image/webp" ? "webp" : "jpg";
-  return new File([blob], `foto.${ext}`, { type: blob.type });
-}
 
 export default function GaleriaFotos({ productos }: { productos: ProductoFoto[] }) {
   const [subidas, setSubidas] = useState<Record<number, string | null>>(() =>
@@ -67,7 +44,7 @@ export default function GaleriaFotos({ productos }: { productos: ProductoFoto[] 
     setOcupado(idPos);
     setErrores((e) => ({ ...e, [idPos]: "" }));
     try {
-      const optimizada = await optimizar(archivo);
+      const optimizada = await optimizarImagen(archivo, LADO_MAX);
       const fd = new FormData();
       fd.set("idPos", String(idPos));
       fd.set("foto", optimizada);
