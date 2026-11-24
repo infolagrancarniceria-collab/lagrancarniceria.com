@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -7,6 +8,7 @@ import { calcularProducto, fechaVencimientoLote, formatoFecha, mapaIngredientes,
 import TablaNutricional from "@/components/etiquetado/TablaNutricional";
 import SelloAltoEn from "@/components/etiquetado/SelloAltoEn";
 import BotonImprimir from "./BotonImprimir";
+import { CAMPOS_DISENO, leerPosiciones, type CampoDiseno } from "@/lib/etiquetado/diseno";
 
 function numero(v: string | string[] | undefined): number | null {
   if (typeof v !== "string" || v.trim() === "") return null;
@@ -40,6 +42,11 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
   const ancho = numero(sp.ancho) ?? producto.etiquetaAnchoCm;
   const alto = numero(sp.alto) ?? producto.etiquetaAltoCm;
   const netoG = numero(sp.neto);
+  const copias = Math.min(Math.max(Math.round(numero(sp.copias) ?? 1), 1), 60);
+  const piezas = sp.piezas === "frente" || sp.piezas === "info" ? sp.piezas : "ambas";
+  // Cuántas piezas de este tamaño caben en una hoja A4 (19 × 27,7 cm útiles
+  // con márgenes de 1 cm y 0,4 cm entre piezas) — solo de referencia.
+  const porHojaA4 = (w: number, h: number) => Math.floor(19.4 / (w + 0.4)) * Math.floor(28.1 / (h + 0.4));
   const area = ancho && alto ? ancho * alto : null;
   const selloCm = area ? tamanoSelloCm(area) : null;
   const sellos = r.sellosQueCorresponden;
@@ -80,13 +87,183 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
   if (!codigoLote) avisos.push("Sin lote: elige un lote registrado o escribe un código.");
   if (!netoG) avisos.push("Sin peso neto: el contenido neto y las porciones por envase quedan en blanco para completarlos a mano.");
   if (merma === 0 && !lote) avisos.push("Merma 0 %: correcto solo si el producto se vende crudo, sin cocción/ahumado/secado.");
+  if (producto.disenoFrontalUrl && !leerPosiciones(producto.disenoCampos).neto)
+    avisos.push("El diseño no tiene ubicado el peso neto: en el frente queda la línea en blanco (igual va en la cara de información).");
   avisos.push(...r.advertencias);
 
   const porciones = netoG ? porcionesPorEnvase(netoG, producto.porcionG) : null;
+  const diseno = producto.disenoFrontalUrl;
+  const posiciones = leerPosiciones(producto.disenoCampos);
+  const valoresCampos: Partial<Record<CampoDiseno, string>> = {
+    neto: netoG ? formatoEntero(netoG) : "",
+    elab: formatoFecha(fechaElab),
+    venc: fechaVenc ? formatoFecha(fechaVenc) : "",
+    lote: codigoLote ?? "",
+  };
   const alergenos = alergenosDe(r.lineas);
   const cm = (v: number) => `${v}cm`;
   const anchoPieza = ancho ?? 10;
+  // La cara de información puede tener otro ancho que el frente (ej. frente
+  // de 12 × 8 cm e información de 9 cm de ancho, que caben 4 por hoja).
+  const anchoInfo = numero(sp.anchoInfo) ?? anchoPieza;
   const altoPieza = alto ?? 10;
+
+  // Cara principal y cara de información; se repiten "copias" veces para
+  // aprovechar la hoja de vinilo (ej. 3 frentes de 12 × 8 cm por A4).
+  const renderFrente = (k: number) => (
+    <div
+      key={`f${k}`}
+      className="pieza-etiqueta"
+      style={{
+        width: cm(anchoPieza),
+        height: cm(altoPieza),
+        position: "relative",
+        background: "#fff",
+        color: "#000",
+        outline: "1px dashed #999",
+        fontFamily: "Arial, Helvetica, sans-serif",
+        overflow: "hidden",
+      }}
+    >
+      {diseno ? (
+        // Diseño propio (Canva) de fondo, a tamaño exacto de la pieza.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={diseno} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/logo.webp" alt="" style={{ position: "absolute", left: "0.3cm", top: "0.3cm", width: `${Math.min(anchoPieza * 0.3, 3)}cm` }} />
+      )}
+      {sellos.length > 0 && selloCm && (
+        <div
+          style={{
+            position: "absolute",
+            right: "0.2cm",
+            top: "0.2cm",
+            display: "grid",
+            gridTemplateColumns: `repeat(${columnas}, ${cm(selloCm)})`,
+            gap: cm(sep),
+            justifyItems: "center",
+          }}
+        >
+          {sellos.map((s) => (
+            <SelloAltoEn key={s} sello={s} tamano={cm(selloCm)} />
+          ))}
+        </div>
+      )}
+      {diseno ? (
+        CAMPOS_DISENO.map(({ clave }) => {
+          const p = posiciones[clave];
+          if (!p) return null;
+          return (
+            <span
+              key={clave}
+              style={{
+                position: "absolute",
+                left: `${p.x}%`,
+                top: `${p.y}%`,
+                transform: "translateY(-100%)",
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                fontSize: `${Math.max(7, Math.min(11, altoPieza * 1.05))}pt`,
+                fontWeight: 700,
+                color: "#2b2420",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
+                paddingBottom: "0.04cm",
+              }}
+            >
+              {valoresCampos[clave] ?? ""}
+            </span>
+          );
+        })
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            left: "0.3cm",
+            right: "0.3cm",
+            bottom: "0.3cm",
+            top: `${Math.max(altoPieza / 2, (selloCm ?? 0) * filasSellos + 0.4)}cm`,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+          }}
+        >
+          <div style={{ fontWeight: 700, fontSize: `${Math.min(18, Math.max(10, anchoPieza * 1.6))}pt`, lineHeight: 1.1 }}>
+            {producto.nombre}
+          </div>
+          <div style={{ fontSize: "9pt", marginTop: "0.15cm" }}>
+            Contenido neto: {netoG ? `${formatoEntero(netoG)} g` : "________ g"}
+          </div>
+        </div>
+      )}
+    </div>
+
+  );
+
+  const renderInfo = (k: number) => (
+    <div
+      key={`i${k}`}
+      className="pieza-etiqueta"
+      style={{
+        width: cm(anchoInfo),
+        minHeight: cm(Math.min(altoPieza, 10)),
+        background: "#fff",
+        color: "#000",
+        outline: "1px dashed #999",
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: "6.5pt",
+        lineHeight: 1.3,
+        padding: "0.25cm",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.12cm",
+      }}
+    >
+      <div style={{ fontWeight: 700, fontSize: "8pt" }}>{producto.nombre}</div>
+      <div>
+        <b>Ingredientes:</b> {textoIngredientes(r.lineas)}
+        {alergenos.length > 0 && (
+          <>
+            {" "}
+            <b>Contiene: {alergenos.join(", ")}.</b>
+          </>
+        )}
+      </div>
+      {producto.leyendaAdicional && <div style={{ fontWeight: 700 }}>{producto.leyendaAdicional}</div>}
+      <TablaNutricional
+        porcionG={producto.porcionG}
+        porcionMedidaCasera={producto.porcionMedidaCasera}
+        porcionesEnvase={porciones}
+        por100={r.por100}
+        porPorcion={r.porPorcion}
+        desglosarGrasas={r.desglosarGrasas}
+      />
+      {!porciones && <div>Porciones por envase: aprox. ____</div>}
+      <div>
+        <b>Elab.:</b> {formatoFecha(fechaElab)} &nbsp; <b>Venc.:</b> {fechaVenc ? formatoFecha(fechaVenc) : "__/__/__"} &nbsp;{" "}
+        <b>Lote:</b> {codigoLote ?? "________"}
+      </div>
+      {producto.almacenamiento && (
+        <div>
+          <b>Conservación:</b> {producto.almacenamiento}
+        </div>
+      )}
+      {producto.instruccionesUso && (
+        <div>
+          <b>Modo de uso:</b> {producto.instruccionesUso}
+        </div>
+      )}
+      <div>
+        <b>Contenido neto:</b> {netoG ? `${formatoEntero(netoG)} g` : "________ g"}
+      </div>
+      {rotulo && (
+        <div>
+          <b>Elaborado por:</b> {rotulo.razonSocial}, {rotulo.domicilio}. {rotulo.resolucionSanitaria} País de origen:{" "}
+          {rotulo.paisOrigen}.{rotulo.contacto ? ` ${rotulo.contacto}` : ""}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div>
@@ -132,10 +309,31 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
             Alto cara principal (cm)
             <input name="alto" defaultValue={alto ?? ""} inputMode="decimal" className={input} />
           </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Ancho información (cm)
+            <input name="anchoInfo" defaultValue={numero(sp.anchoInfo) ?? ""} inputMode="decimal" className={input} placeholder="igual al frente" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Imprimir
+            <select name="piezas" defaultValue={piezas} className={input}>
+              <option value="ambas">Frente + información</option>
+              <option value="frente">Solo frentes</option>
+              <option value="info">Solo información</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Copias
+            <input name="copias" defaultValue={copias} inputMode="numeric" className={input} />
+          </label>
           <div className="flex items-end gap-3 sm:col-span-3 lg:col-span-6">
             <button className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-background">Actualizar</button>
             <BotonImprimir />
             <span className="text-xs text-muted">
+              {ancho && alto && piezas !== "ambas"
+                ? piezas === "frente"
+                  ? `Caben ~${porHojaA4(ancho, alto)} frentes por hoja A4 · `
+                  : `Caben ~${porHojaA4(anchoInfo, Math.max(alto, 10))} etiquetas de información por hoja A4 · `
+                : ""}
               Área {area ? `${formatoEntero(area)} cm²` : "—"} · sello {selloCm ? `${selloCm} × ${selloCm} cm` : "—"} · merma{" "}
               {merma.toLocaleString("es-CL", { maximumFractionDigits: 1 })} %
             </span>
@@ -154,123 +352,13 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
         </p>
       </div>
 
-      <div className="hoja-etiquetas mt-6 flex flex-wrap items-start gap-6">
-        {/* Cara principal */}
-        <div
-          className="pieza-etiqueta"
-          style={{
-            width: cm(anchoPieza),
-            height: cm(altoPieza),
-            position: "relative",
-            background: "#fff",
-            color: "#000",
-            outline: "1px dashed #999",
-            fontFamily: "Arial, Helvetica, sans-serif",
-            overflow: "hidden",
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.webp" alt="" style={{ position: "absolute", left: "0.3cm", top: "0.3cm", width: `${Math.min(anchoPieza * 0.3, 3)}cm` }} />
-          {sellos.length > 0 && selloCm && (
-            <div
-              style={{
-                position: "absolute",
-                right: "0.2cm",
-                top: "0.2cm",
-                display: "grid",
-                gridTemplateColumns: `repeat(${columnas}, ${cm(selloCm)})`,
-                gap: cm(sep),
-                justifyItems: "center",
-              }}
-            >
-              {sellos.map((s) => (
-                <SelloAltoEn key={s} sello={s} tamano={cm(selloCm)} />
-              ))}
-            </div>
-          )}
-          <div
-            style={{
-              position: "absolute",
-              left: "0.3cm",
-              right: "0.3cm",
-              bottom: "0.3cm",
-              top: `${Math.max(altoPieza / 2, (selloCm ?? 0) * filasSellos + 0.4)}cm`,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-            }}
-          >
-            <div style={{ fontWeight: 700, fontSize: `${Math.min(18, Math.max(10, anchoPieza * 1.6))}pt`, lineHeight: 1.1 }}>
-              {producto.nombre}
-            </div>
-            <div style={{ fontSize: "9pt", marginTop: "0.15cm" }}>
-              Contenido neto: {netoG ? `${formatoEntero(netoG)} g` : "________ g"}
-            </div>
-          </div>
-        </div>
-
-        {/* Cara de información */}
-        <div
-          className="pieza-etiqueta"
-          style={{
-            width: cm(anchoPieza),
-            minHeight: cm(altoPieza),
-            background: "#fff",
-            color: "#000",
-            outline: "1px dashed #999",
-            fontFamily: "Arial, Helvetica, sans-serif",
-            fontSize: "6.5pt",
-            lineHeight: 1.3,
-            padding: "0.25cm",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.12cm",
-          }}
-        >
-          <div style={{ fontWeight: 700, fontSize: "8pt" }}>{producto.nombre}</div>
-          <div>
-            <b>Ingredientes:</b> {textoIngredientes(r.lineas)}
-            {alergenos.length > 0 && (
-              <>
-                {" "}
-                <b>Contiene: {alergenos.join(", ")}.</b>
-              </>
-            )}
-          </div>
-          {producto.leyendaAdicional && <div style={{ fontWeight: 700 }}>{producto.leyendaAdicional}</div>}
-          <TablaNutricional
-            porcionG={producto.porcionG}
-            porcionMedidaCasera={producto.porcionMedidaCasera}
-            porcionesEnvase={porciones}
-            por100={r.por100}
-            porPorcion={r.porPorcion}
-            desglosarGrasas={r.desglosarGrasas}
-          />
-          {!porciones && <div>Porciones por envase: aprox. ____</div>}
-          <div>
-            <b>Elab.:</b> {formatoFecha(fechaElab)} &nbsp; <b>Venc.:</b> {fechaVenc ? formatoFecha(fechaVenc) : "__/__/__"} &nbsp;{" "}
-            <b>Lote:</b> {codigoLote ?? "________"}
-          </div>
-          {producto.almacenamiento && (
-            <div>
-              <b>Conservación:</b> {producto.almacenamiento}
-            </div>
-          )}
-          {producto.instruccionesUso && (
-            <div>
-              <b>Modo de uso:</b> {producto.instruccionesUso}
-            </div>
-          )}
-          <div>
-            <b>Contenido neto:</b> {netoG ? `${formatoEntero(netoG)} g` : "________ g"}
-          </div>
-          {rotulo && (
-            <div>
-              <b>Elaborado por:</b> {rotulo.razonSocial}, {rotulo.domicilio}. {rotulo.resolucionSanitaria} País de origen:{" "}
-              {rotulo.paisOrigen}.{rotulo.contacto ? ` ${rotulo.contacto}` : ""}
-            </div>
-          )}
-        </div>
+      <div className="hoja-etiquetas mt-6 flex flex-wrap items-start gap-[0.4cm]">
+        {Array.from({ length: copias }, (_, i) => (
+          <Fragment key={i}>
+            {piezas !== "info" && renderFrente(i)}
+            {piezas !== "frente" && renderInfo(i)}
+          </Fragment>
+        ))}
       </div>
     </div>
   );

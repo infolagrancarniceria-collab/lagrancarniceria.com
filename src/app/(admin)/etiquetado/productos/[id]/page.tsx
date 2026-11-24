@@ -6,6 +6,8 @@ import { aIngredienteCalculo, aItemReceta, fechaVencimientoLote, formatoFecha, m
 import { eliminarLote, eliminarProducto } from "../../acciones";
 import EditorProducto from "./EditorProducto";
 import FormLote from "./FormLote";
+import EditorDiseno from "./EditorDiseno";
+import { leerPosiciones } from "@/lib/etiquetado/diseno";
 
 export default async function ProductoPage({ params }: PageProps<"/etiquetado/productos/[id]">) {
   await requerirSesion();
@@ -66,6 +68,16 @@ export default async function ProductoPage({ params }: PageProps<"/etiquetado/pr
         ingredientes={ingredientes.map(aIngredienteCalculo)}
         catalogo={catalogo}
       />
+
+      {producto && (
+        <EditorDiseno
+          productoId={producto.id}
+          url={producto.disenoFrontalUrl}
+          posiciones={leerPosiciones(producto.disenoCampos)}
+          anchoCm={producto.etiquetaAnchoCm}
+          altoCm={producto.etiquetaAltoCm}
+        />
+      )}
 
       {producto && (
         <section className="mt-10">
