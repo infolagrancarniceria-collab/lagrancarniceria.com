@@ -136,7 +136,16 @@ export interface ResultadoCalculo {
   advertencias: string[];
   // Gramos de salmuera preparada (según la receta) y absorbida por el lote.
   salmuera: { preparadaG: number; absorbidaG: number } | null;
+  // true = los valores son físicamente imposibles (ej. más de 100 g de
+  // macronutrientes en 100 g de producto por una merma mal registrada):
+  // la etiqueta no se debe emitir hasta corregir los datos.
+  bloqueante: boolean;
 }
+
+// Merma máxima razonable: ni los curados más secos pierden más de ~70 %.
+// Por encima, casi siempre es un peso mal ingresado (gramos por kilos, el
+// peso de un paquete en vez del de la pieza).
+export const MERMA_MAXIMA = 70;
 
 function vacio(): NutrientesPor100 {
   return {
@@ -228,6 +237,11 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
   lineas.sort((a, b) => b.gramos - a.gramos);
 
   const pesoCrudoG = lineas.reduce((s, l) => s + l.gramos, 0);
+  if (receta.mermaPct > MERMA_MAXIMA) {
+    advertencias.push(
+      `Merma de ${redondearG(receta.mermaPct)} %: no es realista (máximo ${MERMA_MAXIMA} %). Revisa los pesos del lote (ambos en kg, de la pieza completa).`
+    );
+  }
   const merma = Math.min(Math.max(receta.mermaPct, 0), 95) / 100;
   const pesoFinalG = pesoCrudoG * (1 - merma);
 
@@ -237,6 +251,22 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
   const desglosarGrasas = redondearG(porPorcion.grasaTotalG) >= 3;
 
   if (receta.porcionG <= 0) advertencias.push("La porción debe ser mayor a 0 g.");
+
+  // Controles de plausibilidad: 100 g de producto no pueden tener más de
+  // 100 g de sólidos, y sobre ~3.000 mg de sodio (7,5 g de sal) por 100 g
+  // ningún producto cárnico es comestible.
+  const macros = por100.proteinasG + por100.grasaTotalG + por100.hcDispG;
+  const imposible = macros > 100 || receta.mermaPct > MERMA_MAXIMA;
+  if (macros > 100) {
+    advertencias.push(
+      `Imposible: 100 g de producto suman ${redondearG(macros)} g de proteínas, grasas e hidratos. Casi seguro la merma está mal registrada.`
+    );
+  }
+  if (por100.sodioMg > 3000) {
+    advertencias.push(
+      `Sodio muy alto: ${redondearEntero(por100.sodioMg)} mg/100 g (≈ ${redondearG((por100.sodioMg * 2.54) / 1000)} g de sal). Revisa la merma, que los ingredientes de la salmuera estén marcados "en salmuera" y el % absorbido.`
+    );
+  }
 
   const nombresQue = (campo: "adicionaSodio" | "adicionaAzucares" | "adicionaGrasas") =>
     lineas.filter((l) => ingredientes.get(l.ingredienteId)?.[campo]).map((l) => l.nombre);
@@ -282,6 +312,7 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
     ingredientesFaltantes: faltantes,
     advertencias,
     salmuera,
+    bloqueante: imposible,
   };
 }
 

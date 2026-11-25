@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { cerrarSesion, iniciarSesion, requerirSesion } from "@/lib/etiquetado/auth";
+import { MERMA_MAXIMA } from "@/lib/etiquetado/calculo";
 
 export type EstadoForm = { error: string | null; ok?: string | null };
 
@@ -196,6 +197,12 @@ export async function guardarLote(_prev: EstadoForm, fd: FormData): Promise<Esta
   if (!parsed.success) return { error: primerError(parsed.error) };
   const d = { ...parsed.data, pesoAntesG: parsed.data.pesoAntesG * 1000, pesoFinalG: parsed.data.pesoFinalG * 1000 };
   if (d.pesoFinalG > d.pesoAntesG) return { error: "El peso final no puede ser mayor que el peso antes del proceso" };
+  const mermaLote = (1 - d.pesoFinalG / d.pesoAntesG) * 100;
+  if (mermaLote > MERMA_MAXIMA) {
+    return {
+      error: `Esos pesos dan una merma de ${Math.round(mermaLote)} %, que no es realista. Ingresa ambos pesos en kg y de la pieza o tanda completa (no de un paquete).`,
+    };
+  }
   try {
     await prisma.loteProduccion.create({ data: d });
   } catch {

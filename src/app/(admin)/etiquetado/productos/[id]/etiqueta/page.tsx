@@ -327,7 +327,11 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
           </label>
           <div className="flex items-end gap-3 sm:col-span-3 lg:col-span-6">
             <button className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-background">Actualizar</button>
-            <BotonImprimir />
+            {r.bloqueante ? (
+              <span className="rounded-lg bg-offer px-4 py-2 text-sm font-bold text-background">Corrige los datos antes de imprimir</span>
+            ) : (
+              <BotonImprimir />
+            )}
             <span className="text-xs text-muted">
               {ancho && alto && piezas !== "ambas"
                 ? piezas === "frente"
@@ -340,6 +344,18 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
           </div>
         </form>
 
+        {r.bloqueante && (
+          <div className="mt-3 rounded-xl border-2 border-offer bg-card p-4 text-sm">
+            <p className="font-bold text-offer">Los valores de esta etiqueta son imposibles y no se puede imprimir.</p>
+            <p className="mt-1">
+              Merma usada: {merma.toLocaleString("es-CL", { maximumFractionDigits: 1 })} %
+              {lote
+                ? ` (lote ${lote.codigo}: ${(lote.pesoAntesG / 1000).toLocaleString("es-CL")} kg → ${(lote.pesoFinalG / 1000).toLocaleString("es-CL")} kg)`
+                : " (merma típica del producto)"}
+              . Elimina ese lote y regístralo con los pesos correctos, o corrige la merma típica del producto.
+            </p>
+          </div>
+        )}
         {avisos.length > 0 && (
           <ul className="mt-3 list-disc rounded-xl border border-gold bg-card py-3 pl-8 pr-4 text-sm">
             {avisos.map((a) => (

@@ -66,6 +66,9 @@ export default async function EtiquetadoInicio() {
                   ))
                 )}
                 {p.publicarEnWeb && <span className="rounded-full bg-gold/30 px-2 py-0.5 text-xs">En la web</span>}
+                {r.bloqueante && (
+                  <span className="rounded-full bg-offer px-2 py-0.5 text-xs font-bold text-background">Revisar datos</span>
+                )}
               </div>
             </Link>
           );

@@ -122,10 +122,13 @@ export async function etiquetasPublicas(): Promise<EtiquetaPublica[]> {
   });
   if (productos.length === 0) return [];
   const ingredientes = await mapaIngredientes();
-  return productos.map((p) => {
+  return productos.flatMap((p) => {
     const merma = p.lotes[0] ? mermaDeLote(p.lotes[0]) : p.mermaPct;
     const r = calcularProducto(p, ingredientes, merma);
-    return {
+    // Valores imposibles (ej. lote con pesos mal ingresados): mejor no
+    // publicar la tabla que publicar una errónea.
+    if (r.bloqueante) return [];
+    return [{
       idPos: p.idPosWeb!,
       porcionG: p.porcionG,
       porcionMedidaCasera: p.porcionMedidaCasera,
@@ -134,6 +137,6 @@ export async function etiquetasPublicas(): Promise<EtiquetaPublica[]> {
       desglosarGrasas: r.desglosarGrasas,
       sellos: r.sellosQueCorresponden,
       ingredientes: textoIngredientes(r.lineas),
-    };
+    }];
   });
 }
