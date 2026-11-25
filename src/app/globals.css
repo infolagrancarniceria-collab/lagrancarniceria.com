@@ -60,7 +60,7 @@ textarea {
 /* Módulo /etiquetado: al imprimir solo salen las piezas de etiqueta, a
    tamaño real (en cm), sobre fondo blanco. */
 @page {
-  margin: 10mm;
+  margin: 5mm;
 }
 
 @media print {

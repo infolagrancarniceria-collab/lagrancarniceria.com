@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +17,10 @@ function numero(v: string | string[] | undefined): number | null {
 }
 
 const input = "rounded-lg border border-card-border bg-white px-3 py-2";
+
+// Margen de la hoja al imprimir y separación entre piezas (guía de corte).
+const MARGEN_HOJA_CM = 0.5;
+const SEP_PIEZAS_CM = 0.2;
 
 export default async function EtiquetaPage({ params, searchParams }: PageProps<"/etiquetado/productos/[id]/etiqueta">) {
   await requerirSesion();
@@ -42,11 +45,8 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
   const ancho = numero(sp.ancho) ?? producto.etiquetaAnchoCm;
   const alto = numero(sp.alto) ?? producto.etiquetaAltoCm;
   const netoG = numero(sp.neto);
-  const copias = Math.min(Math.max(Math.round(numero(sp.copias) ?? 1), 1), 60);
   const piezas = sp.piezas === "frente" || sp.piezas === "info" ? sp.piezas : "ambas";
-  // Cuántas piezas de este tamaño caben en una hoja A4 (19 × 27,7 cm útiles
-  // con márgenes de 1 cm y 0,4 cm entre piezas) — solo de referencia.
-  const porHojaA4 = (w: number, h: number) => Math.floor(19.4 / (w + 0.4)) * Math.floor(28.1 / (h + 0.4));
+  const hoja = sp.hoja === "carta" ? "carta" : "a4";
   const area = ancho && alto ? ancho * alto : null;
   const selloCm = area ? tamanoSelloCm(area) : null;
   const sellos = r.sellosQueCorresponden;
@@ -107,6 +107,26 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
   // de 12 × 8 cm e información de 9 cm de ancho, que caben 4 por hoja).
   const anchoInfo = numero(sp.anchoInfo) ?? anchoPieza;
   const altoPieza = alto ?? 10;
+  // Alto reservado para la cara de información (crece si el texto no cabe).
+  const altoInfo = numero(sp.altoInfo) ?? 10;
+
+  // Cuántas piezas caben por hoja: márgenes de 5 mm (las impresoras de tinta
+  // imprimen hasta ~3 mm del borde) y 0,2 cm entre piezas para cortar.
+  const [hojaAncho, hojaAlto] = hoja === "carta" ? [21.59, 27.94] : [21, 29.7];
+  const caben = (w: number, h: number) =>
+    Math.max(0, Math.floor((hojaAncho - 2 * MARGEN_HOJA_CM + SEP_PIEZAS_CM) / (w + SEP_PIEZAS_CM))) *
+    Math.max(0, Math.floor((hojaAlto - 2 * MARGEN_HOJA_CM + SEP_PIEZAS_CM) / (h + SEP_PIEZAS_CM)));
+  const frentesPorHoja = caben(anchoPieza, altoPieza);
+  const infosPorHoja = caben(anchoInfo, altoInfo);
+  // Pares frente + información que llenan una hoja (aprox.: se imprimen
+  // primero todos los frentes y luego todas las de información).
+  const paresPorHoja =
+    frentesPorHoja > 0 && infosPorHoja > 0 ? Math.max(1, Math.floor((frentesPorHoja * infosPorHoja) / (frentesPorHoja + infosPorHoja))) : 1;
+  const porHoja = piezas === "frente" ? frentesPorHoja : piezas === "info" ? infosPorHoja : paresPorHoja;
+  // "Hojas a llenar" manda sobre "Copias": copias = lo que cabe × hojas.
+  const hojas = numero(sp.hojas) ? Math.min(Math.round(numero(sp.hojas)!), 20) : null;
+  const copias = Math.min(Math.max(hojas ? Math.max(porHoja, 1) * hojas : Math.round(numero(sp.copias) ?? 1), 1), 300);
+  const hojasNecesarias = Math.ceil(copias / Math.max(porHoja, 1));
 
   // Cara principal y cara de información; se repiten "copias" veces para
   // aprovechar la hoja de vinilo (ej. 3 frentes de 12 × 8 cm por A4).
@@ -206,7 +226,7 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
       className="pieza-etiqueta"
       style={{
         width: cm(anchoInfo),
-        minHeight: cm(Math.min(altoPieza, 10)),
+        minHeight: cm(altoInfo),
         background: "#fff",
         color: "#000",
         outline: "1px dashed #999",
@@ -314,6 +334,17 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
             <input name="anchoInfo" defaultValue={numero(sp.anchoInfo) ?? ""} inputMode="decimal" className={input} placeholder="igual al frente" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
+            Alto información (cm)
+            <input name="altoInfo" defaultValue={numero(sp.altoInfo) ?? ""} inputMode="decimal" className={input} placeholder="10" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Hoja
+            <select name="hoja" defaultValue={hoja} className={input}>
+              <option value="a4">A4</option>
+              <option value="carta">Carta</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
             Imprimir
             <select name="piezas" defaultValue={piezas} className={input}>
               <option value="ambas">Frente + información</option>
@@ -322,8 +353,12 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
-            Copias
-            <input name="copias" defaultValue={copias} inputMode="numeric" className={input} />
+            Hojas a llenar
+            <input name="hojas" defaultValue={hojas ?? ""} inputMode="numeric" className={input} placeholder="ej. 2" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            o copias exactas
+            <input name="copias" defaultValue={hojas ? "" : copias} inputMode="numeric" className={input} disabled={!!hojas} />
           </label>
           <div className="flex items-end gap-3 sm:col-span-3 lg:col-span-6">
             <button className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-background">Actualizar</button>
@@ -333,11 +368,13 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
               <BotonImprimir />
             )}
             <span className="text-xs text-muted">
-              {ancho && alto && piezas !== "ambas"
-                ? piezas === "frente"
-                  ? `Caben ~${porHojaA4(ancho, alto)} frentes por hoja A4 · `
-                  : `Caben ~${porHojaA4(anchoInfo, Math.max(alto, 10))} etiquetas de información por hoja A4 · `
-                : ""}
+              <b className="text-dark">
+                Por hoja {hoja === "carta" ? "carta" : "A4"}: {frentesPorHoja} frentes ({anchoPieza} × {altoPieza} cm) · {infosPorHoja}{" "}
+                de información ({anchoInfo} × {altoInfo} cm). Se imprimen {copias}{" "}
+                {piezas === "frente" ? "frentes" : piezas === "info" ? "de información" : "pares"} en ~{hojasNecesarias} hoja
+                {hojasNecesarias === 1 ? "" : "s"}.
+              </b>
+              <br />
               Área {area ? `${formatoEntero(area)} cm²` : "—"} · sello {selloCm ? `${selloCm} × ${selloCm} cm` : "—"} · merma{" "}
               {merma.toLocaleString("es-CL", { maximumFractionDigits: 1 })} %
             </span>
@@ -368,13 +405,13 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
         </p>
       </div>
 
-      <div className="hoja-etiquetas mt-6 flex flex-wrap items-start gap-[0.4cm]">
-        {Array.from({ length: copias }, (_, i) => (
-          <Fragment key={i}>
-            {piezas !== "info" && renderFrente(i)}
-            {piezas !== "frente" && renderInfo(i)}
-          </Fragment>
-        ))}
+      {/* Tamaño de hoja y márgenes de impresión según lo elegido. */}
+      <style>{`@page { size: ${hoja === "carta" ? "letter" : "A4"} portrait; margin: ${MARGEN_HOJA_CM * 10}mm; }`}</style>
+      {/* Primero todos los frentes y después todas las de información:
+          así las piezas del mismo tamaño quedan juntas y llenan mejor la hoja. */}
+      <div className="hoja-etiquetas mt-6 flex flex-wrap items-start" style={{ gap: `${SEP_PIEZAS_CM}cm` }}>
+        {piezas !== "info" && Array.from({ length: copias }, (_, i) => renderFrente(i))}
+        {piezas !== "frente" && Array.from({ length: copias }, (_, i) => renderInfo(i))}
       </div>
     </div>
   );
