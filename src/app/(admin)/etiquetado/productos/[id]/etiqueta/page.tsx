@@ -63,13 +63,16 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
   // Presentación 1 = hasta 2 por fila; Presentación 2 (todos en una fila)
   // solo si la altura del cuadrante no alcanza para la 1.
   const sep = 0.15;
-  let columnas = Math.min(2, sellos.length);
-  let filasSellos = Math.ceil(sellos.length / 2);
+  // Disposición vertical (opcional, por producto): una columna, uno bajo
+  // otro, alineada al borde derecho.
+  const vertical = sp.sellos === "vertical" || (sp.sellos !== "fila" && producto.sellosVertical);
+  let columnas = vertical ? 1 : Math.min(2, sellos.length);
+  let filasSellos = vertical ? sellos.length : Math.ceil(sellos.length / 2);
   let cabenSellos = true;
   if (selloCm && ancho && alto && sellos.length > 0) {
     const cabe = (c: number, f: number) => c * selloCm + (c - 1) * sep <= ancho / 2 + 0.01 && f * selloCm + (f - 1) * sep <= alto / 2 + 0.01;
     if (!cabe(columnas, filasSellos)) {
-      if (cabe(sellos.length, 1)) {
+      if (!vertical && cabe(sellos.length, 1)) {
         columnas = sellos.length;
         filasSellos = 1;
       } else cabenSellos = false;
@@ -81,7 +84,13 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
   if (area != null && area < 30)
     avisos.push("La cara principal mide menos de 30 cm²: los sellos van en el envase mayor que contenga los productos (pág. 30).");
   if (sellos.length > 0 && selloCm && !cabenSellos)
-    avisos.push(`Los sellos de ${selloCm} cm no caben en el cuadrante superior derecho: usa una etiqueta más grande.`);
+    avisos.push(
+      vertical
+        ? `Los ${sellos.length} sellos de ${selloCm} cm en columna no caben en la mitad superior de la etiqueta: usa la disposición en fila o una etiqueta más alta.`
+        : `Los sellos de ${selloCm} cm no caben en el cuadrante superior derecho: usa una etiqueta más grande.`
+    );
+  if (vertical && sellos.length > 1)
+    avisos.push("Sellos en columna: el Anexo 3 del manual solo muestra disposiciones en fila; confirma con la Seremi si la vas a usar.");
   if (!rotulo) avisos.push("Faltan los datos del rótulo (razón social, domicilio, resolución).");
   if (!fechaVenc) avisos.push("El producto no tiene vida útil: la fecha de vencimiento queda en blanco.");
   if (!codigoLote) avisos.push("Sin lote: elige un lote registrado o escribe un código.");
@@ -336,6 +345,13 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
           <label className="flex flex-col gap-1 text-sm">
             Alto información (cm)
             <input name="altoInfo" defaultValue={numero(sp.altoInfo) ?? ""} inputMode="decimal" className={input} placeholder="10" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Sellos
+            <select name="sellos" defaultValue={vertical ? "vertical" : "fila"} className={input}>
+              <option value="fila">En fila (Anexo 3)</option>
+              <option value="vertical">En columna</option>
+            </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
             Hoja

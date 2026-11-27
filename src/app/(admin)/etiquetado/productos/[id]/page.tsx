@@ -59,6 +59,7 @@ export default async function ProductoPage({ params }: PageProps<"/etiquetado/pr
                 leyendaAdicional: producto.leyendaAdicional,
                 etiquetaAnchoCm: producto.etiquetaAnchoCm,
                 etiquetaAltoCm: producto.etiquetaAltoCm,
+                sellosVertical: producto.sellosVertical,
                 idPosWeb: producto.idPosWeb,
                 publicarEnWeb: producto.publicarEnWeb,
                 items: producto.items.map(aItemReceta),

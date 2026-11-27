@@ -197,6 +197,9 @@ model ProductoArtesanal {
   // Medidas de la cara principal de la etiqueta, para el tamaño del sello.
   etiquetaAnchoCm Float?
   etiquetaAltoCm  Float?
+  // true = sellos "ALTO EN" en columna (uno bajo otro) en vez de la
+  // disposición del Anexo 3 (de a dos por fila / en una fila).
+  sellosVertical  Boolean @default(false)
 
   // Diseño propio de la cara principal (imagen hecha en Canva, guardada en
   // Vercel Blob). Si existe, la etiqueta lo usa de fondo y encima pone los

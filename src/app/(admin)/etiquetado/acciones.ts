@@ -127,6 +127,7 @@ const productoSchema = z.object({
   leyendaAdicional: textoOpcional,
   etiquetaAnchoCm: numOpcional,
   etiquetaAltoCm: numOpcional,
+  sellosVertical: check,
   idPosWeb: z.preprocess((v) => (v === "" || v == null ? null : Number(v)), z.number().int().nullable()),
   publicarEnWeb: check,
   items: z.preprocess(

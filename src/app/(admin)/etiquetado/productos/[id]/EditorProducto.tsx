@@ -33,6 +33,7 @@ export interface ProductoEditable {
   leyendaAdicional: string | null;
   etiquetaAnchoCm: number | null;
   etiquetaAltoCm: number | null;
+  sellosVertical: boolean;
   idPosWeb: number | null;
   publicarEnWeb: boolean;
   items: ItemReceta[];
@@ -301,6 +302,10 @@ export default function EditorProducto({
           <label className="flex flex-col gap-1 text-sm">
             Alto de la cara principal (cm)
             <input name="etiquetaAltoCm" defaultValue={p?.etiquetaAltoCm ?? ""} inputMode="decimal" className={input} />
+          </label>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+            <input type="checkbox" name="sellosVertical" defaultChecked={p?.sellosVertical} />
+            Sellos en columna (uno bajo otro) en vez de en fila. Útil para etiquetas angostas y altas.
           </label>
           <label className="flex flex-col gap-1 text-sm sm:col-span-2">
             Producto del catálogo web
