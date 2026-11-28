@@ -162,6 +162,9 @@ model IngredienteNutricional {
   adicionaAzucares Boolean @default(false)
   adicionaGrasas   Boolean @default(false)
 
+  // g de agua por 100 g (USDA "Water"): la sal de la salmuera entra en el
+  // agua del tejido. Null = se estima por diferencia.
+  aguaG       Float?
   densidadGMl Float   @default(1)
   pesoUnidadG Float?
   // Lista separada por comas (ej. "leche, soya") — vacío si no es alérgeno.
@@ -184,6 +187,33 @@ model ProductoArtesanal {
   // Salmuera que queda en la carne (% del peso de la base): inyectado +
   // ganancia por inmersión. Null si el producto no lleva salmuera.
   salmueraAbsorbidaPct Float?
+
+  // Curado por inmersión, modelo de equilibrio (src/lib/etiquetado/calculo.ts):
+  // si curadoActivo, reemplaza a salmueraAbsorbidaPct.
+  curadoActivo    Boolean @default(false)
+  tandaLitros     Float?
+  tandaKgCarne    Float?
+  // Agua promedio (%) de la carne de toda la tanda (productos mezclados).
+  tandaAguaCarnePct Float @default(65)
+  fraccionEqMin   Float?
+  fraccionEqMax   Float?
+  factorAzucarMin Float   @default(0.5)
+  factorAzucarMax Float   @default(0.7)
+  enjuaguePct     Float   @default(5)
+  // "si" | "no" | "pendiente" — pendiente = el rango considera ambas.
+  inyeccion       String  @default("no")
+  inyeccionPct    Float   @default(10)
+  // Rango de merma mientras no haya lotes medidos (el central es mermaPct).
+  mermaMinPct     Float?
+  mermaMaxPct     Float?
+  // % de la merma que es grasa que gotea (tocino, costillar).
+  mermaGrasaPct   Float   @default(0)
+  // % de hueso tal como se vende; la tabla es por parte comestible salvo
+  // que tablaConHueso sea true.
+  huesoPct        Float   @default(0)
+  tablaConHueso   Boolean @default(false)
+  // JSON { parametro: "confirmado" | "supuesto" } — hoja de supuestos.
+  supuestos       String?
 
   porcionG            Float
   porcionMedidaCasera String @default("1 unidad")

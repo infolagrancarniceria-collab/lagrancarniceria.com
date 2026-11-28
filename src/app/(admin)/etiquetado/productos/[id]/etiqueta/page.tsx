@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requerirSesion } from "@/lib/etiquetado/auth";
-import { alergenosDe, formatoEntero, porcionesPorEnvase, tamanoSelloCm, textoIngredientes } from "@/lib/etiquetado/calculo";
-import { calcularProducto, fechaVencimientoLote, formatoFecha, mapaIngredientes, mermaDeLote } from "@/lib/etiquetado/datos";
+import { alergenosDe, formatoEntero, porcionesPorEnvase, tamanoSelloCm, textoIngredientes, TEXTO_SELLO } from "@/lib/etiquetado/calculo";
+import { calcularProducto, fechaVencimientoLote, formatoFecha, mapaIngredientes, mermaDeLote, rangoProducto } from "@/lib/etiquetado/datos";
 import TablaNutricional from "@/components/etiquetado/TablaNutricional";
 import SelloAltoEn from "@/components/etiquetado/SelloAltoEn";
 import BotonImprimir from "./BotonImprimir";
@@ -41,6 +41,7 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
   const lote = loteId ? producto.lotes.find((l) => l.id === loteId) ?? null : null;
   const merma = lote ? mermaDeLote(lote) : producto.mermaPct;
   const r = calcularProducto(producto, ingredientes, merma);
+  const rango = rangoProducto(producto, ingredientes, lote ? merma : null);
 
   const ancho = numero(sp.ancho) ?? producto.etiquetaAnchoCm;
   const alto = numero(sp.alto) ?? producto.etiquetaAltoCm;
@@ -406,6 +407,18 @@ export default async function EtiquetaPage({ params, searchParams }: PageProps<"
                 ? ` (lote ${lote.codigo}: ${(lote.pesoAntesG / 1000).toLocaleString("es-CL")} kg → ${(lote.pesoFinalG / 1000).toLocaleString("es-CL")} kg)`
                 : " (merma típica del producto)"}
               . Elimina ese lote y regístralo con los pesos correctos, o corrige la merma típica del producto.
+            </p>
+          </div>
+        )}
+        {rango && rango.zonaGris.length > 0 && (
+          <div className="mt-3 rounded-xl border-2 border-gold bg-card p-4 text-sm">
+            <p className="font-bold text-dark">
+              ZONA GRIS: {rango.zonaGris.map((z) => TEXTO_SELLO[z]).join(", ")}
+            </p>
+            <p className="mt-1">
+              Con los supuestos actuales el sello puede corresponder o no (sodio {formatoEntero(rango.min.sodioMg)}–
+              {formatoEntero(rango.max.sodioMg)} mg · energía {formatoEntero(rango.min.energiaKcal)}–{formatoEntero(rango.max.energiaKcal)}{" "}
+              kcal por 100 g). La etiqueta usa el valor central; confirma con un lote medido o análisis de laboratorio.
             </p>
           </div>
         )}

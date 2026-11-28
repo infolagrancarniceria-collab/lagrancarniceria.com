@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useMemo, useState } from "react";
 import {
   calcular,
+  calcularRango,
   formatoEntero,
   formatoG,
   gramosItem,
@@ -15,6 +16,8 @@ import {
 import TablaNutricional from "@/components/etiquetado/TablaNutricional";
 import SelloAltoEn from "@/components/etiquetado/SelloAltoEn";
 import { guardarProducto, type EstadoForm } from "../../acciones";
+import { parametrosDesdeCampos, rangoDesdeCampos, numeroCampo, type CamposCurado } from "@/lib/etiquetado/curadoForm";
+import CuradoCampos from "./CuradoCampos";
 
 const UNIDADES: UnidadCantidad[] = ["g", "kg", "ml", "l", "unidad"];
 const input = "rounded-lg border border-card-border bg-white px-3 py-2";
@@ -34,6 +37,7 @@ export interface ProductoEditable {
   etiquetaAnchoCm: number | null;
   etiquetaAltoCm: number | null;
   sellosVertical: boolean;
+  curado: CamposCurado;
   idPosWeb: number | null;
   publicarEnWeb: boolean;
   items: ItemReceta[];
@@ -58,10 +62,12 @@ let siguienteClave = 1;
 
 export default function EditorProducto({
   producto: p,
+  curadoNuevo,
   ingredientes,
   catalogo,
 }: {
   producto: ProductoEditable | null;
+  curadoNuevo: CamposCurado;
   ingredientes: IngredienteCalculo[];
   catalogo: { idPos: number; descripcion: string }[];
 }) {
@@ -81,6 +87,7 @@ export default function EditorProducto({
       enSalmuera: !!it.enSalmuera,
     }))
   );
+  const [curado, setCurado] = useState<CamposCurado>(p?.curado ?? curadoNuevo);
   const [salmueraPct, setSalmueraPct] = useState(
     p?.salmueraAbsorbidaPct == null ? "" : String(p.salmueraAbsorbidaPct).replace(".", ",")
   );
@@ -98,16 +105,20 @@ export default function EditorProducto({
 
   const kg = n(kgBase) || 0;
   // Cálculo barato (decenas de ingredientes): se rehace en cada render.
-  const r = calcular(
-    {
-      kgBase: kg,
-      mermaPct: n(merma) || 0,
-      porcionG: n(porcion) || 0,
-      salmueraAbsorbidaPct: salmueraPct.trim() === "" ? null : n(salmueraPct) || 0,
-      items,
-    },
-    mapa
-  );
+  const receta = {
+    kgBase: kg,
+    mermaPct: n(merma) || 0,
+    porcionG: n(porcion) || 0,
+    salmueraAbsorbidaPct: salmueraPct.trim() === "" ? null : n(salmueraPct) || 0,
+    curado: parametrosDesdeCampos(curado),
+    mermaGrasaPct: numeroCampo(curado.mermaGrasaPct) ?? 0,
+    huesoPct: numeroCampo(curado.huesoPct) ?? 0,
+    tablaConHueso: curado.tablaConHueso,
+    items,
+  };
+  const r = calcular(receta, mapa);
+  const parametrosRango = rangoDesdeCampos(curado);
+  const rango = Object.keys(parametrosRango).length > 0 ? calcularRango(receta, mapa, parametrosRango) : null;
 
   const cambiar = (clave: number, cambio: Partial<Fila>) =>
     setFilas((fs) => fs.map((f) => (f.clave === clave ? { ...f, ...cambio } : f)));
@@ -293,6 +304,8 @@ export default function EditorProducto({
           </button>
         </fieldset>
 
+        <CuradoCampos campos={curado} onChange={setCurado} />
+
         <fieldset className="grid gap-3 rounded-xl border border-card-border bg-card p-4 sm:grid-cols-2">
           <legend className="px-1 text-sm font-bold text-dark">Etiqueta y web</legend>
           <label className="flex flex-col gap-1 text-sm">
@@ -358,6 +371,65 @@ export default function EditorProducto({
             {r.sellosQueCorresponden.length === 0 && <span className="text-xs">No corresponde ningún sello.</span>}
           </div>
         </div>
+
+        {(rango || r.curado || r.por100ComoSeVende) && (
+          <div className="rounded-xl border border-card-border bg-card p-4 text-xs">
+            {r.curado && (
+              <p>
+                <b>Inmersión:</b> equilibrio {formatoG(r.curado.salEquilibrioPor100Agua)} g de sal/100 g de agua · agua del corte{" "}
+                {formatoEntero(r.curado.aguaCarnePct)} % · absorbe {formatoG(r.curado.solutosAbsorbidosGPorKg)} g/kg
+                {r.curado.inyectadoGPorKg > 0 ? ` + ${formatoEntero(r.curado.inyectadoGPorKg)} g/kg inyectados` : ""}
+              </p>
+            )}
+            {r.por100ComoSeVende && (
+              <p className="mt-1">
+                <b>Con hueso (tal como se vende):</b> {formatoEntero(r.por100ComoSeVende.energiaKcal)} kcal ·{" "}
+                {formatoEntero(r.por100ComoSeVende.sodioMg)} mg de sodio por 100 g
+              </p>
+            )}
+            {rango && (
+              <>
+                <h3 className="mt-2 text-sm font-bold text-dark">Rango (supuestos mín.–máx.)</h3>
+                <table className="tabular mt-1 w-full">
+                  <tbody>
+                    <tr>
+                      <td>Sodio (mg)</td>
+                      <td className="text-right">
+                        {formatoEntero(rango.min.sodioMg)}–{formatoEntero(rango.max.sodioMg)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Energía (kcal)</td>
+                      <td className="text-right">
+                        {formatoEntero(rango.min.energiaKcal)}–{formatoEntero(rango.max.energiaKcal)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Azúcares (g)</td>
+                      <td className="text-right">
+                        {formatoG(rango.min.azucaresG)}–{formatoG(rango.max.azucaresG)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Grasa saturada (g)</td>
+                      <td className="text-right">
+                        {formatoG(rango.min.grasaSatG)}–{formatoG(rango.max.grasaSatG)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                {rango.zonaGris.length > 0 ? (
+                  <p className="mt-2 rounded bg-offer px-2 py-1 font-bold text-background">
+                    ZONA GRIS: {rango.zonaGris.map((z) => TEXTO_SELLO[z]).join(", ")} — el sello depende de los supuestos. Prioridad
+                    para laboratorio.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-muted">Los sellos no cambian dentro del rango ({rango.combinaciones} combinaciones).</p>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
         <div className="rounded-xl border border-card-border bg-card p-4 text-xs">
           <h3 className="text-sm font-bold text-dark">¿Por qué estos sellos?</h3>

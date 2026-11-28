@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requerirSesion } from "@/lib/etiquetado/auth";
 import { TEXTO_SELLO, formatoEntero } from "@/lib/etiquetado/calculo";
-import { calcularProducto, mapaIngredientes, mermaDeLote } from "@/lib/etiquetado/datos";
+import { calcularProducto, mapaIngredientes, mermaDeLote, rangoProducto } from "@/lib/etiquetado/datos";
 
 export default async function EtiquetadoInicio() {
   await requerirSesion();
@@ -41,6 +41,7 @@ export default async function EtiquetadoInicio() {
           const ultimo = p.lotes[0];
           const merma = ultimo ? mermaDeLote(ultimo) : p.mermaPct;
           const r = calcularProducto(p, ingredientes, merma);
+          const rango = rangoProducto(p, ingredientes, ultimo ? merma : null);
           return (
             <Link
               key={p.id}
@@ -66,6 +67,9 @@ export default async function EtiquetadoInicio() {
                   ))
                 )}
                 {p.publicarEnWeb && <span className="rounded-full bg-gold/30 px-2 py-0.5 text-xs">En la web</span>}
+                {rango && rango.zonaGris.length > 0 && (
+                  <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-dark">Zona gris</span>
+                )}
                 {r.bloqueante && (
                   <span className="rounded-full bg-offer px-2 py-0.5 text-xs font-bold text-background">Revisar datos</span>
                 )}

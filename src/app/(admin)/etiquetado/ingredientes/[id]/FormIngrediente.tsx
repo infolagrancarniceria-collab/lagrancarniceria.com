@@ -54,6 +54,11 @@ export default function FormIngrediente({ ing }: { ing: IngredienteNutricional |
             </label>
           ))}
         </div>
+        <label className="mt-3 flex max-w-xs flex-col gap-1 text-sm">
+          Agua (g) — opcional
+          <input name="aguaG" defaultValue={v("aguaG")} inputMode="decimal" className={`${input} tabular`} />
+          <span className="text-xs text-muted">Necesaria para el modelo de salmuera. Vacío = se estima por diferencia.</span>
+        </label>
         <p className="mt-2 text-xs text-muted">
           H. de C. disponibles = hidratos de carbono totales − fibra dietética. Acepta coma o punto decimal.
         </p>

@@ -2,7 +2,12 @@ import type { IngredienteNutricional, LoteProduccion, ProductoArtesanal, RecetaI
 import { prisma } from "@/lib/prisma";
 import {
   calcular,
+  calcularRango,
   textoIngredientes,
+  type ParametrosCurado,
+  type RangoParametros,
+  type Receta,
+  type ResultadoRango,
   type IngredienteCalculo,
   type ItemReceta,
   type NutrientesPor100,
@@ -35,6 +40,7 @@ export function aIngredienteCalculo(i: IngredienteNutricional): IngredienteCalcu
     densidadGMl: i.densidadGMl,
     pesoUnidadG: i.pesoUnidadG,
     alergeno: i.alergeno,
+    aguaG: i.aguaG,
   };
 }
 
@@ -83,21 +89,64 @@ export async function mapaIngredientes(): Promise<Map<number, IngredienteCalculo
   return new Map(ings.map((i) => [i.id, aIngredienteCalculo(i)]));
 }
 
+const medio = (a: number | null, b: number | null, defecto: number) =>
+  a != null && b != null ? (a + b) / 2 : (a ?? b ?? defecto);
+
+// Parámetros del modelo de inmersión (valores centrales) a partir del producto.
+export function parametrosCurado(p: ProductoArtesanal): ParametrosCurado | null {
+  if (!p.curadoActivo) return null;
+  return {
+    tandaLitros: p.tandaLitros ?? 20,
+    tandaKgCarne: p.tandaKgCarne ?? 9,
+    tandaAguaCarnePct: p.tandaAguaCarnePct,
+    fraccionEq: medio(p.fraccionEqMin, p.fraccionEqMax, 0.6),
+    factorAzucar: (p.factorAzucarMin + p.factorAzucarMax) / 2,
+    enjuaguePct: p.enjuaguePct,
+    // Pendiente: el valor central asume que SÍ se inyecta (lo conservador
+    // para el sodio); el rango considera ambas.
+    inyeccionPct: p.inyeccion === "no" ? 0 : p.inyeccionPct,
+  };
+}
+
+export function recetaDeProducto(p: ProductoArtesanal & { items: RecetaItem[] }, mermaPct: number = p.mermaPct): Receta {
+  return {
+    kgBase: p.kgBase,
+    mermaPct,
+    porcionG: p.porcionG,
+    salmueraAbsorbidaPct: p.salmueraAbsorbidaPct,
+    curado: parametrosCurado(p),
+    mermaGrasaPct: p.mermaGrasaPct,
+    huesoPct: p.huesoPct,
+    tablaConHueso: p.tablaConHueso,
+    items: [...p.items].sort((a, b) => a.orden - b.orden).map(aItemReceta),
+  };
+}
+
 export function calcularProducto(
   p: ProductoArtesanal & { items: RecetaItem[] },
   ingredientes: Map<number, IngredienteCalculo>,
   mermaPct: number = p.mermaPct
 ): ResultadoCalculo {
-  return calcular(
-    {
-      kgBase: p.kgBase,
-      mermaPct,
-      porcionG: p.porcionG,
-      salmueraAbsorbidaPct: p.salmueraAbsorbidaPct,
-      items: [...p.items].sort((a, b) => a.orden - b.orden).map(aItemReceta),
-    },
-    ingredientes
-  );
+  return calcular(recetaDeProducto(p, mermaPct), ingredientes);
+}
+
+// Rango (mín–máx) y zona gris. Si hay un lote con merma medida, la merma se
+// fija en ese valor; si no, se usa el rango mermaMin–mermaMax.
+export function rangoProducto(
+  p: ProductoArtesanal & { items: RecetaItem[] },
+  ingredientes: Map<number, IngredienteCalculo>,
+  mermaMedida: number | null = null
+): ResultadoRango | null {
+  const rango: RangoParametros = {};
+  if (p.curadoActivo) {
+    if (p.fraccionEqMin != null && p.fraccionEqMax != null) rango.fraccionEq = [p.fraccionEqMin, p.fraccionEqMax];
+    rango.factorAzucar = [p.factorAzucarMin, p.factorAzucarMax];
+    rango.inyeccion = p.inyeccion === "pendiente" ? "pendiente" : p.inyeccion === "si" ? "si" : "no";
+    rango.inyeccionPct = p.inyeccionPct;
+  }
+  if (mermaMedida == null && p.mermaMinPct != null && p.mermaMaxPct != null) rango.merma = [p.mermaMinPct, p.mermaMaxPct];
+  if (Object.keys(rango).length === 0) return null;
+  return calcularRango(recetaDeProducto(p, mermaMedida ?? p.mermaPct), ingredientes, rango);
 }
 
 // Lo que la web pública muestra en la ficha de un producto (sin datos

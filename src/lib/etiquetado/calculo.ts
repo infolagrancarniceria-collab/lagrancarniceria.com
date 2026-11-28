@@ -49,6 +49,10 @@ export interface IngredienteCalculo extends NutrientesPor100 {
   // Peso de 1 unidad en g (ej. 1 diente de ajo) — null si no se mide en unidades.
   pesoUnidadG: number | null;
   alergeno: string | null;
+  // g de agua por 100 g (USDA "Water"). La sal de una salmuera entra en el
+  // AGUA del tejido, no en la grasa: el modelo de inmersión lo necesita.
+  // Null = se estima como 100 − proteínas − grasa − hidratos − 1 (cenizas).
+  aguaG: number | null;
 }
 
 export type UnidadCantidad = "g" | "kg" | "ml" | "l" | "unidad";
@@ -80,6 +84,49 @@ export interface Receta {
   // agua + 55 g de sal); lo que entra al producto es esa composición
   // escalada a los gramos absorbidos.
   salmueraAbsorbidaPct?: number | null;
+  // Curado por inmersión con modelo de equilibrio (reemplaza a
+  // salmueraAbsorbidaPct cuando está presente). Ver ParametrosCurado.
+  curado?: ParametrosCurado | null;
+  // Parte de la merma que es grasa que gotea (cortes grasos: tocino,
+  // costillar), en % del peso perdido. El resto de la merma es agua.
+  mermaGrasaPct?: number;
+  // % de hueso del producto tal como se vende (0 si es deshuesado).
+  huesoPct?: number;
+  // true = la tabla se declara por 100 g "tal como se vende" (con hueso);
+  // false = por 100 g de parte comestible.
+  tablaConHueso?: boolean;
+}
+
+// Modelo de curado por inmersión (balance de masa):
+// 1. La sal (y la sal de cura, el azúcar…) de toda la salmuera de la tanda se
+//    reparte entre el agua de la salmuera y el agua de TODA la carne de la
+//    tanda → concentración de equilibrio por gramo de agua.
+// 2. Cada pieza alcanza solo una fracción de ese equilibrio en el tiempo de
+//    inmersión (depende del grosor): fraccionEq. El azúcar difunde más lento:
+//    factorAzucar × fraccionEq.
+// 3. Lo absorbido entra en el agua del tejido (no en la grasa).
+// 4. El enjuague arrastra enjuaguePct % de lo absorbido por inmersión.
+// 5. Si se inyecta, entra además inyeccionPct % del peso con salmuera de la
+//    composición de la receta.
+export interface ParametrosCurado {
+  tandaLitros: number;
+  tandaKgCarne: number;
+  // Agua promedio (%) de TODA la carne de la tanda (productos mezclados):
+  // define el equilibrio. El agua del propio corte define cuánto absorbe él.
+  tandaAguaCarnePct: number;
+  fraccionEq: number;
+  factorAzucar: number;
+  enjuaguePct: number;
+  inyeccionPct: number;
+}
+
+export interface DetalleCurado {
+  // g de sal (todo lo que no es azúcar) por 100 g de agua en el equilibrio.
+  salEquilibrioPor100Agua: number;
+  aguaCarnePct: number;
+  // g por kg de carne cruda.
+  solutosAbsorbidosGPorKg: number;
+  inyectadoGPorKg: number;
 }
 
 // Límites del RSA para sólidos (Imagen N°11, pág. 28 — vigentes desde el
@@ -136,6 +183,11 @@ export interface ResultadoCalculo {
   advertencias: string[];
   // Gramos de salmuera preparada (según la receta) y absorbida por el lote.
   salmuera: { preparadaG: number; absorbidaG: number } | null;
+  // Detalle del modelo de inmersión, si se usó.
+  curado: DetalleCurado | null;
+  // Por 100 g "tal como se vende" (incluyendo hueso), si el producto tiene
+  // hueso; por100 es siempre por parte comestible.
+  por100ComoSeVende: NutrientesPor100 | null;
   // true = los valores son físicamente imposibles (ej. más de 100 g de
   // macronutrientes en 100 g de producto por una merma mal registrada):
   // la etiqueta no se debe emitir hasta corregir los datos.
@@ -198,20 +250,73 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
   const lineas: LineaIngredienteCalculada[] = [];
   const totales = vacio();
 
-  // Salmuera: la receta define su composición; al producto entra solo lo
-  // absorbido (salmueraAbsorbidaPct del peso de la base), repartido según
-  // esa composición.
+  // Salmuera: la receta define su COMPOSICIÓN (ej. 1000 ml de agua + 55 g de
+  // sal); cuánto entra al producto depende del modo:
+  // - curado (modelo de equilibrio por inmersión + inyección), o
+  // - salmueraAbsorbidaPct (% del peso de la base, medido por diferencia).
   const itemsSalmuera = receta.items.filter((i) => i.enSalmuera);
-  let factorSalmuera = 0;
+  const gramosSalmuera = new Map<ItemReceta, number>();
   let salmuera: ResultadoCalculo["salmuera"] = null;
-  if (itemsSalmuera.length > 0) {
+  let curado: DetalleCurado | null = null;
+  if (itemsSalmuera.length > 0 && receta.curado) {
+    const c = receta.curado;
+    let pesoBase = 0;
+    let aguaBase = 0;
+    for (const it of receta.items) {
+      if (it.enSalmuera) continue;
+      const ing = ingredientes.get(it.ingredienteId);
+      if (!ing) continue;
+      const g = gramosItem(it, ing, receta.kgBase);
+      pesoBase += g;
+      aguaBase += (g * aguaDe(ing)) / 100;
+    }
+    const receta_ = itemsSalmuera.map((it) => {
+      const ing = ingredientes.get(it.ingredienteId);
+      const g = ing ? gramosItem(it, ing, receta.kgBase) : 0;
+      const aguaPct = ing ? aguaDe(ing) : 0;
+      return { it, ing, g, aguaPct, soluto: (g * (100 - aguaPct)) / 100 };
+    });
+    const aguaReceta = receta_.reduce((s, r) => s + (r.g * r.aguaPct) / 100, 0);
+    const totalReceta = receta_.reduce((s, r) => s + r.g, 0);
+    if (aguaReceta <= 0) advertencias.push("La salmuera no tiene agua: agrega el agua de la receta marcada \"en salmuera\".");
+    const k = aguaReceta > 0 ? (c.tandaLitros * 1000) / aguaReceta : 0;
+    const fracAgua = pesoBase > 0 ? aguaBase / pesoBase : 0;
+    const aguaTotalTanda = c.tandaLitros * 1000 + (c.tandaKgCarne * 1000 * c.tandaAguaCarnePct) / 100;
+    let salEq = 0;
+    let absorbidoTotal = 0;
+    let inyectadoTotal = 0;
+    for (const r of receta_) {
+      if (!r.ing) continue;
+      const ceq = aguaTotalTanda > 0 ? (k * r.soluto) / aguaTotalTanda : 0; // g de soluto por g de agua
+      if (!r.ing.adicionaAzucares) salEq += ceq * 100;
+      const f = c.fraccionEq * (r.ing.adicionaAzucares ? c.factorAzucar : 1);
+      const solutoAbsorbido = ceq * aguaBase * f * (1 - c.enjuaguePct / 100);
+      const gIngAbsorbido = r.aguaPct < 100 ? solutoAbsorbido / ((100 - r.aguaPct) / 100) : 0;
+      const gInyectado = totalReceta > 0 ? ((c.inyeccionPct / 100) * pesoBase * r.g) / totalReceta : 0;
+      gramosSalmuera.set(r.it, gIngAbsorbido + gInyectado);
+      absorbidoTotal += gIngAbsorbido;
+      inyectadoTotal += gInyectado;
+    }
+    const kgBase = pesoBase / 1000 || 1;
+    curado = {
+      salEquilibrioPor100Agua: salEq,
+      aguaCarnePct: fracAgua * 100,
+      solutosAbsorbidosGPorKg: absorbidoTotal / kgBase,
+      inyectadoGPorKg: inyectadoTotal / kgBase,
+    };
+    salmuera = { preparadaG: totalReceta, absorbidaG: absorbidoTotal + inyectadoTotal };
+  } else if (itemsSalmuera.length > 0) {
     const preparadaG = itemsSalmuera.reduce((s, it) => {
       const ing = ingredientes.get(it.ingredienteId);
       return ing ? s + gramosItem(it, ing, receta.kgBase) : s;
     }, 0);
     const pct = Math.max(receta.salmueraAbsorbidaPct ?? 0, 0);
     const absorbidaG = (receta.kgBase * 1000 * pct) / 100;
-    factorSalmuera = preparadaG > 0 ? absorbidaG / preparadaG : 0;
+    const factor = preparadaG > 0 ? absorbidaG / preparadaG : 0;
+    for (const it of itemsSalmuera) {
+      const ing = ingredientes.get(it.ingredienteId);
+      if (ing) gramosSalmuera.set(it, gramosItem(it, ing, receta.kgBase) * factor);
+    }
     salmuera = { preparadaG, absorbidaG };
     if (pct === 0) advertencias.push("Hay ingredientes de salmuera pero la salmuera absorbida es 0 %: no aportan nada.");
   }
@@ -225,7 +330,7 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
     if (item.unidad === "unidad" && !ing.pesoUnidadG) {
       advertencias.push(`"${ing.nombre}" se mide en unidades pero no tiene peso por unidad — cuenta como 0 g.`);
     }
-    const g = gramosItem(item, ing, receta.kgBase) * (item.enSalmuera ? factorSalmuera : 1);
+    const g = item.enSalmuera ? gramosSalmuera.get(item) ?? 0 : gramosItem(item, ing, receta.kgBase);
     // Paso 5: regla de tres — aporte = g × valor/100.
     for (const k of CLAVES_NUTRIENTES) totales[k] += (g * ing[k]) / 100;
     const existente = lineas.find((l) => l.ingredienteId === ing.id);
@@ -245,12 +350,57 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
   const merma = Math.min(Math.max(receta.mermaPct, 0), 95) / 100;
   const pesoFinalG = pesoCrudoG * (1 - merma);
 
+  // Goteo de grasa: parte de la merma es grasa (cortes grasos). Se descuenta
+  // de la grasa total y de cada tipo de ácido graso en proporción; el
+  // colesterol se queda (está en las membranas del tejido magro).
+  const grasaGoteo = Math.min(
+    pesoCrudoG * merma * (Math.max(receta.mermaGrasaPct ?? 0, 0) / 100),
+    totales.grasaTotalG * 0.9
+  );
+  if (grasaGoteo > 0 && totales.grasaTotalG > 0) {
+    const f = (totales.grasaTotalG - grasaGoteo) / totales.grasaTotalG;
+    totales.grasaTotalG *= f;
+    totales.grasaSatG *= f;
+    totales.grasaMonoG *= f;
+    totales.grasaPoliG *= f;
+    totales.grasaTransG *= f;
+  }
+
+  // Energía con los factores generales del RSA (proteínas 4, grasas 9,
+  // hidratos de carbono 4 kcal/g), no con la energía de la tabla de
+  // composición (el USDA usa factores específicos por alimento). El alcohol
+  // de vinos/cerveza (7 kcal/g) se omite: en dosis de receta y con cocción
+  // su aporte es despreciable.
+  totales.energiaKcal = 4 * totales.proteinasG + 9 * totales.grasaTotalG + 4 * totales.hcDispG;
+
   // Paso 8: por 100 g de producto terminado y por porción.
-  const por100 = pesoFinalG > 0 ? escalar(totales, 100 / pesoFinalG) : vacio();
+  const huesoPct = Math.min(Math.max(receta.huesoPct ?? 0, 0), 80);
+  const por100Comestible = pesoFinalG > 0 ? escalar(totales, 100 / pesoFinalG) : vacio();
+  const por100ComoSeVende = huesoPct > 0 ? escalar(por100Comestible, 1 - huesoPct / 100) : null;
+  // Lo que se declara (y con lo que se evalúan los sellos).
+  const por100 = receta.tablaConHueso && por100ComoSeVende ? por100ComoSeVende : por100Comestible;
   const porPorcion = escalar(por100, receta.porcionG / 100);
   const desglosarGrasas = redondearG(porPorcion.grasaTotalG) >= 3;
 
   if (receta.porcionG <= 0) advertencias.push("La porción debe ser mayor a 0 g.");
+
+
+  // Suma de ácidos grasos vs grasa total: en carnes suele ser 85–95 % (el
+  // resto es glicerol y otros lípidos). Fuera de rango = dato de origen raro.
+  if (por100.grasaTotalG >= 1) {
+    const sumaAG = por100.grasaSatG + por100.grasaMonoG + por100.grasaPoliG + por100.grasaTransG;
+    const r = sumaAG / por100.grasaTotalG;
+    if (r < 0.75 || r > 1.0) {
+      advertencias.push(
+        `Los ácidos grasos suman ${Math.round(r * 100)} % de la grasa total (lo normal en carnes es 85–95 %): revisa los valores de los ingredientes.`
+      );
+    }
+  }
+  if (curado && (por100.sodioMg < 600 || por100.sodioMg > 1500)) {
+    advertencias.push(
+      `Sodio de ${redondearEntero(por100.sodioMg)} mg/100 g: fuera del rango típico de un curado-ahumado (≈600–1.500). No es un error necesariamente, pero conviene verificarlo con laboratorio.`
+    );
+  }
 
   // Controles de plausibilidad: 100 g de producto no pueden tener más de
   // 100 g de sólidos, y sobre ~3.000 mg de sodio (7,5 g de sal) por 100 g
@@ -312,8 +462,85 @@ export function calcular(receta: Receta, ingredientes: Map<number, IngredienteCa
     ingredientesFaltantes: faltantes,
     advertencias,
     salmuera,
+    curado,
+    por100ComoSeVende,
     bloqueante: imposible,
   };
+}
+
+// Agua del ingrediente: dato de la tabla o, si falta, estimada por
+// diferencia (100 − macronutrientes − ~1 g de cenizas).
+export function aguaDe(ing: IngredienteCalculo): number {
+  if (ing.aguaG != null) return Math.min(Math.max(ing.aguaG, 0), 100);
+  return Math.max(0, 100 - ing.proteinasG - ing.grasaTotalG - ing.hcDispG - 1);
+}
+
+// Rango de valores variando los parámetros inciertos (cada uno entre su
+// mínimo y su máximo, y la inyección sí/no si está pendiente). Un sello está
+// en ZONA GRIS si corresponde en unas combinaciones y en otras no: es lo que
+// conviene mandar a laboratorio primero.
+export interface RangoParametros {
+  fraccionEq?: [number, number];
+  factorAzucar?: [number, number];
+  merma?: [number, number];
+  inyeccion?: "si" | "no" | "pendiente";
+  inyeccionPct?: number;
+}
+
+export interface ResultadoRango {
+  min: NutrientesPor100;
+  max: NutrientesPor100;
+  zonaGris: Sello[];
+  combinaciones: number;
+}
+
+export function calcularRango(
+  receta: Receta,
+  ingredientes: Map<number, IngredienteCalculo>,
+  rango: RangoParametros
+): ResultadoRango {
+  const dos = (r: [number, number] | undefined, central: number) => (r ? [r[0], r[1]] : [central]);
+  const c = receta.curado;
+  const fracs = c ? dos(rango.fraccionEq, c.fraccionEq) : [0];
+  const azucs = c ? dos(rango.factorAzucar, c.factorAzucar) : [0];
+  const mermas = dos(rango.merma, receta.mermaPct);
+  const inys = c
+    ? rango.inyeccion === "pendiente"
+      ? [0, rango.inyeccionPct ?? c.inyeccionPct]
+      : [c.inyeccionPct]
+    : [0];
+  const min = vacio();
+  const max = vacio();
+  for (const k of CLAVES_NUTRIENTES) {
+    min[k] = Infinity;
+    max[k] = -Infinity;
+  }
+  const visto = new Map<Sello, Set<boolean>>();
+  let n = 0;
+  for (const fr of fracs)
+    for (const az of azucs)
+      for (const me of mermas)
+        for (const iy of inys) {
+          const r = calcular(
+            {
+              ...receta,
+              mermaPct: me,
+              curado: c ? { ...c, fraccionEq: fr, factorAzucar: az, inyeccionPct: iy } : c,
+            },
+            ingredientes
+          );
+          n++;
+          for (const k of CLAVES_NUTRIENTES) {
+            min[k] = Math.min(min[k], r.por100[k]);
+            max[k] = Math.max(max[k], r.por100[k]);
+          }
+          for (const ev of r.sellos) {
+            if (!visto.has(ev.sello)) visto.set(ev.sello, new Set());
+            visto.get(ev.sello)!.add(ev.corresponde);
+          }
+        }
+  const zonaGris = [...visto.entries()].filter(([, v]) => v.size > 1).map(([s]) => s);
+  return { min, max, zonaGris, combinaciones: n };
 }
 
 // Redondeo (pág. 26): dígito descartado >= 5 sube. kcal y mg en enteros,

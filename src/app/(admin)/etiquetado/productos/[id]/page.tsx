@@ -7,6 +7,7 @@ import { eliminarLote, eliminarProducto } from "../../acciones";
 import EditorProducto from "./EditorProducto";
 import FormLote from "./FormLote";
 import EditorDiseno from "./EditorDiseno";
+import { camposDesdeProducto } from "@/lib/etiquetado/curadoForm";
 import { leerPosiciones } from "@/lib/etiquetado/diseno";
 
 export default async function ProductoPage({ params }: PageProps<"/etiquetado/productos/[id]">) {
@@ -60,12 +61,14 @@ export default async function ProductoPage({ params }: PageProps<"/etiquetado/pr
                 etiquetaAnchoCm: producto.etiquetaAnchoCm,
                 etiquetaAltoCm: producto.etiquetaAltoCm,
                 sellosVertical: producto.sellosVertical,
+                curado: camposDesdeProducto(producto),
                 idPosWeb: producto.idPosWeb,
                 publicarEnWeb: producto.publicarEnWeb,
                 items: producto.items.map(aItemReceta),
               }
             : null
         }
+        curadoNuevo={camposDesdeProducto(null)}
         ingredientes={ingredientes.map(aIngredienteCalculo)}
         catalogo={catalogo}
       />
