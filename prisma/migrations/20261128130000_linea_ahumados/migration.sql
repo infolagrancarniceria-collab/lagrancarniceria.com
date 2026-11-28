@@ -65,20 +65,36 @@ CROSS JOIN "ProductoArtesanal" p JOIN "IngredienteNutricional" i ON i."nombre" =
 WHERE p."nombre" IN ('El Hincha – Costillar de cerdo ahumado', 'El Elegante – Lomo de cerdo ahumado', 'El Encendido – Pernil de cerdo ahumado', 'El Sereno – Pernil de cerdo ahumado', 'El Infaltable – Tocino ahumado', 'La Clásica – Chuleta de cerdo ahumada', 'El Protagonista – Pastrami de vacuno ahumado', 'El Anfitrión – Jamón de pierna ahumado') AND NOT p."curadoActivo"
   AND NOT EXISTS (SELECT 1 FROM "RecetaItem" ri WHERE ri."productoId" = p."id" AND ri."enSalmuera");
 
--- 6. Parámetros del modelo de inmersión (tanda: 20 L de salmuera y ~9 kg de carne).
+-- 6. Parámetros del modelo de inmersión (tanda: 20 L de salmuera nueva por
+--    tanda y ~9 kg de carne). Primero inmersión (3 días) y después inyección
+--    (10 %) en todos salvo el pernil. Pastrami de ganso de vacuno, sin cocción
+--    posterior al ahumado. Sal de cura nitrada.
 --    Fracción de equilibrio según grosor, merma y goteo de grasa: rangos provisorios.
 UPDATE "ProductoArtesanal" p SET "curadoActivo" = true, "tandaLitros" = 20, "tandaKgCarne" = 9,
   "fraccionEqMin" = v.fmin, "fraccionEqMax" = v.fmax, "inyeccion" = v.iny, "inyeccionPct" = 10, "enjuaguePct" = 5,
   "factorAzucarMin" = 0.5, "factorAzucarMax" = 0.7, "mermaMinPct" = v.mmin, "mermaMaxPct" = v.mmax,
   "mermaPct" = v.mcen, "mermaGrasaPct" = v.mgra, "huesoPct" = v.hueso, "supuestos" = v.sup
 FROM (VALUES
-  ('La Clásica – Chuleta de cerdo ahumada', 0.7, 0.9, 'si', 15, 25, 20, 0, 5, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "confirmado", "corte": "supuesto", "salCura": "supuesto", "inyeccion": "confirmado"}'),
-  ('El Hincha – Costillar de cerdo ahumado', 0.5, 0.7, 'pendiente', 20, 30, 25, 15, 25, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "supuesto", "corte": "supuesto", "salCura": "supuesto", "inyeccion": "supuesto"}'),
-  ('El Elegante – Lomo de cerdo ahumado', 0.5, 0.7, 'pendiente', 15, 25, 20, 0, 0, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "confirmado", "porcion": "supuesto", "corte": "supuesto", "salCura": "supuesto", "inyeccion": "supuesto"}'),
-  ('El Protagonista – Pastrami de vacuno ahumado', 0.3, 0.5, 'si', 30, 40, 35, 0, 0, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "confirmado", "porcion": "supuesto", "corte": "supuesto", "salCura": "supuesto", "inyeccion": "confirmado"}'),
-  ('El Anfitrión – Jamón de pierna ahumado', 0.25, 0.4, 'si', 15, 25, 20, 0, 0, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "supuesto", "corte": "confirmado", "salCura": "supuesto", "inyeccion": "confirmado"}'),
-  ('El Encendido – Pernil de cerdo ahumado', 0.25, 0.4, 'pendiente', 20, 30, 25, 5, 20, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "supuesto", "corte": "supuesto", "salCura": "supuesto", "inyeccion": "supuesto"}'),
-  ('El Sereno – Pernil de cerdo ahumado', 0.25, 0.4, 'pendiente', 20, 30, 25, 5, 20, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "supuesto", "corte": "supuesto", "salCura": "supuesto", "inyeccion": "supuesto"}'),
-  ('El Infaltable – Tocino ahumado', 0.7, 0.9, 'pendiente', 10, 15, 12.5, 30, 0, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "confirmado", "porcion": "supuesto", "corte": "supuesto", "salCura": "supuesto", "inyeccion": "supuesto"}')
+  ('La Clásica – Chuleta de cerdo ahumada', 0.7, 0.9, 'si', 15, 25, 20, 0, 5, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "confirmado", "corte": "supuesto", "salCura": "confirmado", "inyeccion": "confirmado"}'),
+  ('El Hincha – Costillar de cerdo ahumado', 0.5, 0.7, 'si', 20, 30, 25, 15, 25, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "supuesto", "corte": "supuesto", "salCura": "confirmado", "inyeccion": "confirmado"}'),
+  ('El Elegante – Lomo de cerdo ahumado', 0.5, 0.7, 'si', 15, 25, 20, 0, 0, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "confirmado", "porcion": "supuesto", "corte": "supuesto", "salCura": "confirmado", "inyeccion": "confirmado"}'),
+  ('El Protagonista – Pastrami de vacuno ahumado', 0.3, 0.5, 'si', 25, 35, 30, 0, 0, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "confirmado", "porcion": "supuesto", "corte": "confirmado", "salCura": "confirmado", "inyeccion": "confirmado"}'),
+  ('El Anfitrión – Jamón de pierna ahumado', 0.25, 0.4, 'si', 15, 25, 20, 0, 0, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "supuesto", "corte": "confirmado", "salCura": "confirmado", "inyeccion": "confirmado"}'),
+  ('El Encendido – Pernil de cerdo ahumado', 0.25, 0.4, 'no', 20, 30, 25, 5, 20, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "supuesto", "corte": "supuesto", "salCura": "confirmado", "inyeccion": "confirmado"}'),
+  ('El Sereno – Pernil de cerdo ahumado', 0.25, 0.4, 'no', 20, 30, 25, 5, 20, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "supuesto", "porcion": "supuesto", "corte": "supuesto", "salCura": "confirmado", "inyeccion": "confirmado"}'),
+  ('El Infaltable – Tocino ahumado', 0.7, 0.9, 'si', 10, 15, 12.5, 30, 0, '{"tanda": "confirmado", "salmuera": "confirmado", "fraccionEq": "supuesto", "factorAzucar": "supuesto", "enjuague": "supuesto", "merma": "supuesto", "mermaGrasa": "supuesto", "hueso": "confirmado", "porcion": "supuesto", "corte": "supuesto", "salCura": "confirmado", "inyeccion": "confirmado"}')
 ) AS v(nombre, fmin, fmax, iny, mmin, mmax, mcen, mgra, hueso, sup)
 WHERE p."nombre" = v.nombre AND NOT p."curadoActivo";
+
+-- 7. Sal de cura nitrada (~99,4 % NaCl + ~0,6 % nitrito de sodio):
+--    Na = 99,4 × 0,3934 + 0,6 × 0,333 ≈ 39,3 g/100 g (igual al valor cargado).
+UPDATE "IngredienteNutricional" SET
+  "fuente" = 'Sal nitrada: ~99,4 % NaCl + ~0,6 % nitrito de sodio (estequiométrico)',
+  "notas" = 'Sodio = NaCl × 0,3934 + NaNO2 × 0,333 ≈ 39.300 mg/100 g. Tipo de sal de cura confirmado por el negocio: nitrada.'
+WHERE "nombre" = 'Sal de cura' AND "fuente" LIKE 'Estimado%';
+
+-- 8. Pernil: se vende con cuero, y la tabla USDA SR Legacy no tiene cuero de
+--    cerdo crudo; la composición del corte queda como supuesto (grasa y
+--    colesterol reales mayores) hasta tener tabla chilena o laboratorio.
+UPDATE "IngredienteNutricional" SET "notas" = 'Pork, fresh, leg (ham), shank half, separable lean and fat, raw. El pernil se vende CON CUERO y esta entrada no lo incluye: la grasa y el colesterol reales son mayores. Reemplazar con la Tabla de Composición de Alimentos de Chile o con análisis de laboratorio.'
+WHERE "nombre" = 'Cerdo, pernil (carne y grasa), crudo';
